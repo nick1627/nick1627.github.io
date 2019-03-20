@@ -1,13 +1,16 @@
 <html>
-	<!-- coment -->
+	<!-- comment -->
 	<head>
 		<link rel= "stylesheet" href = "something.css"/>
 		<title>Pictures of cats</title>
 	</head>
 	<body>
-		<p>randomn paragaroahdgkjha</p>
 		<div id = "Main">
 			<h1>Pictures of cats</h1>
+			<br/>
+			<button>try and catch me</button>
+			<p> You clicked the button: <span id = "counter">0</span>times!</p>
+			<br/>
 			<p>To understand more about this website, click <a href = "./about.html">here</a></p>
 			<p>Go to <a href = "https://www.w3schools.com">W3Schools</a> to learn more about how to make websites.</p>
 			<p>To submit a picture of a cat:</p>
@@ -47,10 +50,9 @@
 		</script>
 		<br/>
 		<br/>
-		<button>try and catch me</button>
+		
 		<br/>
 		<br/>
-		<p> You clicked the button: <span id = "counter">0</span>times!</p>
 		<script>
 			let my_button = document.querySelector("button");
 			let counter = document.querySelector("#counter");
@@ -60,18 +62,19 @@
 				let randY = Math.random() * document.documentElement.clientHeight;
 				my_button.style.left = randX + "px";
 				my_button.style.top = randY + "px";
-
-
 			}
 			my_button.onclick = function(e){
-				my_button.classList.remove("runaway");
+				//my_button.classList.remove("runaway");
 				score++;
 				counter.innerHTML = score;
 			}
 		</script>
-		<br/>
-		<br/>
-		<br/>
+		<script>
+			let BallX = 0
+			let BallY = 0
+
+			
+		</script>
 		<br/>
 	</body>
 </html>
