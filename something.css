@@ -1,0 +1,29 @@
+
+body *:hover{
+    background-color:cyan !important;
+    transition: background-color 2s; /* fades in background colour */
+}
+
+body {
+    font-family: sans-serif;
+}
+h1{
+    font-family:cursive
+}
+.subtitle{
+    font-size: 10pt;
+    color: red;
+}
+
+#specialid{
+    font-size: 50pt;
+    font-weight: bold;
+    color: blue;
+}
+p p{
+    color: blue;
+}
+button{
+    position: absolute;
+    transition:left 1s, top 5s;
+}

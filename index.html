@@ -1,9 +1,11 @@
 <html>
 	<!-- coment -->
 	<head>
+		<link rel= "stylesheet" href = "something.css"/>
 		<title>Pictures of cats</title>
 	</head>
 	<body>
+		<p>randomn paragaroahdgkjha</p>
 		<div id = "Main">
 			<h1>Pictures of cats</h1>
 			<p>To understand more about this website, click <a href = "./about.html">here</a></p>
@@ -20,13 +22,15 @@
 				<li>Please also give me money</li>
 				<li>Thanks</li>
 			</ul>
-			<p>This is a link to <a href = "http://google.com">Google</a> so you can find me a picture of a cat.</p>
+			<p>This is a link to <a href = "http://google.com">Google</a> so you can find me a picture of a cat.
+				<p>i should be blue</p>
+			</p>
 		</div>
 		<div id = "CatPics">
 			<p>Below are all the pictures of cats that have been submitted so far.</p>
 		</div>
 		 
-
+		<h1 class = "subtitle" id = "specialid"> special heading thing</h1>
         <div id="firstdiv">
 			<h2>a nice picture</h2>
 			<img width = "500" src="./hovercat.jpg" alt="A Brown Bear"/>
@@ -37,5 +41,37 @@
 				<img style = "width:50%" src="./hovercat.jpg" alt="A Brown Bear"/>
 	
 		</div>
+		<script>
+			//alert("Hello world!")
+			console.log("Hello World!")
+		</script>
+		<br/>
+		<br/>
+		<button>try and catch me</button>
+		<br/>
+		<br/>
+		<p> You clicked the button: <span id = "counter">0</span>times!</p>
+		<script>
+			let my_button = document.querySelector("button");
+			let counter = document.querySelector("#counter");
+			let score = 0;
+			my_button.onmouseenter = function(e){
+				let randX = Math.random() * document.documentElement.clientWidth;
+				let randY = Math.random() * document.documentElement.clientHeight;
+				my_button.style.left = randX + "px";
+				my_button.style.top = randY + "px";
+
+
+			}
+			my_button.onclick = function(e){
+				my_button.classList.remove("runaway");
+				score++;
+				counter.innerHTML = score;
+			}
+		</script>
+		<br/>
+		<br/>
+		<br/>
+		<br/>
 	</body>
 </html>
