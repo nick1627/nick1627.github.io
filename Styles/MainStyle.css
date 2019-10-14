@@ -5,10 +5,10 @@ body *:hover{
 }
 
 body {
-    font-family: sans-serif;
+    font-family: times;
 }
 h1{
-    font-family:cursive
+    font-family: times
 }
 .subtitle{
     font-size: 10pt;
