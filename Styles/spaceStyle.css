@@ -1,0 +1,35 @@
+
+
+body{
+    background-color: rgb(0, 0, 0);
+    height:100%;
+}
+
+a{
+    color:cyan;
+}
+
+.sideBar{
+    background-color: midnightblue;
+    color: white;
+
+    position:absolute;
+    left:0;
+    top:0;
+
+    height: 100%;
+    width: 25%;
+}
+
+#spaceCanvas{
+    background-color: rgb(167, 26, 26);
+
+    margin-left:25%;
+
+    height:100%;
+    width: 75%;
+
+    padding-top: 0%;
+}
+
+
