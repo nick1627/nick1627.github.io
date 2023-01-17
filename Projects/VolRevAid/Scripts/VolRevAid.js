@@ -3,8 +3,8 @@ class Shape {
     * Rotate a shape with normal vector (1,0,0) so that it aligns with
     * the given normal vector.
     * @param {String}                   newAxis             "x", "y" or "z", the axis the normal vector will align with
-    * @param {Array<Array<Number>>}     arrayOfPoints       Array of vectors for points that make up the shape.
-    * @returns {Array<Array<Number>>}                       Array of vectors for points that make up the shape once rotated
+    * @param {Array<math.matrix>}     arrayOfPoints       Array of vectors for points that make up the shape.
+    * @returns {Array<math.matrix>}                       Array of vectors for points that make up the shape once rotated
     */
     rotateToNewAxis(newAxis, arrayOfPoints){
         // Assume points are aligned with x axis initially
@@ -18,18 +18,10 @@ class Shape {
                 case "z":
                     // rotate about y axis by -90 degrees
                     rotationMatrix = math.matrix([[0, 0, -1], [0, 1, 0], [1, 0, 0]]);
-            
                     break;
             }
-            let temp = math.matrix([0, 0, 0])
             for (let i = 0; i < arrayOfPoints.length; i++){
-              
-                temp = math.multiply(rotationMatrix, arrayOfPoints[i]);
-                
-                arrayOfPoints[i][0] = temp.get([0]);
-                arrayOfPoints[i][1] = temp.get([1]);
-                arrayOfPoints[i][2] = temp.get([2]);
-
+                arrayOfPoints[i] = math.multiply(rotationMatrix, arrayOfPoints[i]);
             }
         }
         return arrayOfPoints;
@@ -84,7 +76,7 @@ class Circle extends Shape{
     */
     constructor(centre, normalAxis, radius, angle){
         super();
-        this.centre = centre;
+        this.centre = math.matrix(centre);
         this.normalAxis = normalAxis
         this.radius = radius;
         this.angle = angle*Math.PI/180;
@@ -98,7 +90,7 @@ class Circle extends Shape{
         // then transform
         let circumferencePoints = []
         for (let theta = 0; theta < 2*Math.PI; theta += this.angle){
-            circumferencePoints.push([0, this.radius*Math.cos(theta), this.radius*Math.sin(theta)])
+            circumferencePoints.push(math.matrix([0, this.radius*Math.cos(theta), this.radius*Math.sin(theta)]))
         }
 
         // Have the circumference points at/around the origin
@@ -107,9 +99,7 @@ class Circle extends Shape{
         circumferencePoints = this.rotateToNewAxis(this.normalAxis, circumferencePoints)
         // Now translate
         for (let i = 0; i < circumferencePoints.length; i++){
-            circumferencePoints[i][0] += this.centre[0]
-            circumferencePoints[i][1] += this.centre[1]
-            circumferencePoints[i][2] += this.centre[2]
+            circumferencePoints[i] = math.add(circumferencePoints[i], this.centre)
         }
 
         return circumferencePoints
@@ -119,12 +109,12 @@ class Circle extends Shape{
      * Converts shape information into format suitable for plotting with plotly
      */
     getDrawData(){
-
+        console.log(this.circumferencePoints[0].get([0]))
         let circleDrawData = ({
             type: "mesh3d",
-            x: [this.centre[0], this.circumferencePoints[0][0]],
-            y: [this.centre[1], this.circumferencePoints[0][1]],
-            z: [this.centre[2], this.circumferencePoints[0][2]],
+            x: [this.centre.get([0]), this.circumferencePoints[0].get([0])],
+            y: [this.centre.get([1]), this.circumferencePoints[0].get([1])],
+            z: [this.centre.get([2]), this.circumferencePoints[0].get([2])],
             i: [],
             j: [],
             k: [],
@@ -133,16 +123,15 @@ class Circle extends Shape{
         let length = this.circumferencePoints.length;
 
         for (let i = 1; i < length; i+=1 ){
-            circleDrawData.x.push(this.circumferencePoints[i][0]);
-            circleDrawData.y.push(this.circumferencePoints[i][1]);
-            circleDrawData.z.push(this.circumferencePoints[i][2]);
+            circleDrawData.x.push(this.circumferencePoints[i].get([0]));
+            circleDrawData.y.push(this.circumferencePoints[i].get([1]));
+            circleDrawData.z.push(this.circumferencePoints[i].get([2]));
             circleDrawData.i.push(0);
             circleDrawData.j.push(i);
             circleDrawData.k.push(i+1);
         }
 
-        return [circleDrawData];
-       
+        return circleDrawData;
     }
 }
 
@@ -163,6 +152,8 @@ class Cylinder extends Shape{
         this.radius = radius;
         this.angle = angle*Math.PI/180;
         this.thickness = math.sqrt(math.sum(math.square(this.axisVec)));
+
+        
 
         this.firstCircle = new Circle(this.centre, this.axisVec, this.radius, this.angle);
         this.secondCircle = new Circle(this.centre + this.axisVec, this.axisVec, this.radius, this.angle);
@@ -236,7 +227,7 @@ function Main(PlotNew = false){
     // }else{
     //     TriangleOne.UpdatePlot("3DGraph", PlotData, AxisLimit);
     // }
-    myCircle.NewPlot("3DGraph", PlotData, AxisLimit);
+    myCircle.NewPlot("3DGraph", [PlotData], AxisLimit);
 }
 
 
