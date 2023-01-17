@@ -69,14 +69,14 @@ class Triangle extends Shape {
 class Circle extends Shape{
     /**
     * Create circle
-    * @param {Array<Number>}    centre      Centre of the circle
-    * @param {Array<Number>}    normalVec   Normal vector of circle in 3d space
+    * @param {math.matrix}    centre      Centre of the circle
+    * @param {String}    normalAxis   Normal vector of circle in 3d space
     * @param {Number}   radius      The radius of the circle
     * @param {Number}   angle       Angle between successive 'spokes' of circle in degrees
     */
     constructor(centre, normalAxis, radius, angle){
         super();
-        this.centre = math.matrix(centre);
+        this.centre = centre;
         this.normalAxis = normalAxis
         this.radius = radius;
         this.angle = angle*Math.PI/180;
@@ -109,7 +109,6 @@ class Circle extends Shape{
      * Converts shape information into format suitable for plotting with plotly
      */
     getDrawData(){
-        console.log(this.circumferencePoints[0].get([0]))
         let circleDrawData = ({
             type: "mesh3d",
             x: [this.centre.get([0]), this.circumferencePoints[0].get([0])],
@@ -139,33 +138,94 @@ class Circle extends Shape{
 class Cylinder extends Shape{
     /**
     * Create cylinder (two circles with connecting tube)
-    * @param {Array<Number>}    centre      Coordinates of centre of first circle
-    * @param {Array<Number>}    axisVec     Vector from centre of first circle to centre of second
+    * @param {math.matrix}    centre      Coordinates of centre of first circle
+    * @param {String}    normalAxis     Vector from centre of first circle to centre of second
     * @param {Number}   radius      The radius of the circles
     * @param {Number}   angle       Angle between successive 'spokes' of circles in degrees
+    * @param {Number}   thickness   Thickness of the cylinder
     */
 
-    constructor(centre, axisVec, radius, angle){
+    constructor(centre, normalAxis, radius, angle, thickness){
         super();
         this.centre = centre;
-        this.axisVec = axisVec;
+        this.normalAxis = normalAxis;
         this.radius = radius;
         this.angle = angle*Math.PI/180;
-        this.thickness = math.sqrt(math.sum(math.square(this.axisVec)));
+        this.thickness = thickness;
+
+        let axisVec = [0, 0, 0];
+        switch (normalAxis){
+            case "x":
+                axisVec[0] = thickness;
+                break;
+            case "y":
+                axisVec[1] = thickness;
+                break;
+            case "z":
+                axisVec[2] = thickness;
+                break;
+        }
 
         
 
-        this.firstCircle = new Circle(this.centre, this.axisVec, this.radius, this.angle);
-        this.secondCircle = new Circle(this.centre + this.axisVec, this.axisVec, this.radius, this.angle);
-
-
-
-
-
+        this.firstCircle = new Circle(this.centre, this.normalAxis, this.radius, this.angle);
+        this.secondCircle = new Circle(math.add(this.centre, axisVec), this.normalAxis, this.radius, this.angle);
 
         
     }
 
+    getDrawData(){
+        let drawData = []
+        // get the draw data for both circles
+        drawData.push(this.firstCircle.getDrawData())
+        drawData.push(this.secondCircle.getDrawData())
+        /**
+         * Now get the data for the connecting tube
+         * As you'd imagine, this would be a set of
+         * rectangles, but each rectangle must be
+         * cut into a triangle for mesh3d to work with
+         */
+
+        let tubeDrawData = ({
+            type: "mesh3d",
+            x: [this.firstCircle.circumferencePoints[0].get([0]), this.secondCircle.circumferencePoints[0].get([0])],
+            y: [this.firstCircle.circumferencePoints[0].get([1]), this.secondCircle.circumferencePoints[0].get([1])],
+            z: [this.firstCircle.circumferencePoints[0].get([2]), this.secondCircle.circumferencePoints[0].get([2])],
+            i: [],
+            j: [],
+            k: [],
+        });
+
+        let length = this.firstCircle.circumferencePoints.length;
+
+        for (let i = 1; i < length; i+=1){
+            /**
+             * each iteration must push two points,
+             * building on the previous two points
+             * to make a new rectangle (two triangles)
+             */       
+            //  push first point
+            tubeDrawData.x.push(this.firstCircle.circumferencePoints[i].get([0]));
+            tubeDrawData.y.push(this.firstCircle.circumferencePoints[i].get([1]));
+            tubeDrawData.z.push(this.firstCircle.circumferencePoints[i].get([2]));
+            // build triangle
+            tubeDrawData.i.push(2*i-2); // which index of all arrays is the first point of this triangle?
+            tubeDrawData.j.push(2*i-1); // which index of all arrays is the second point of this triangle?
+            tubeDrawData.k.push(2*i); // which index of all arrays is the third point of this triangle?
+            // push corresponding second point
+            tubeDrawData.x.push(this.secondCircle.circumferencePoints[i].get([0]));
+            tubeDrawData.y.push(this.secondCircle.circumferencePoints[i].get([1]));
+            tubeDrawData.z.push(this.secondCircle.circumferencePoints[i].get([2]));
+            // build corresponding second triangle
+            tubeDrawData.i.push(2*i-1);
+            tubeDrawData.j.push(2*i);
+            tubeDrawData.k.push(2*i+1);
+        }
+
+        drawData.push(tubeDrawData)
+        return drawData
+
+    }
 }
 
 
@@ -213,10 +273,12 @@ function Main(PlotNew = false){
 
     // let TriangleOne = new Triangle([0, 0, 0], [20000, 20000, 20000], [-10000, 20000, -40000]);
     // let TriangleData = TriangleOne.getTriangleData();
-    let myCircle = new Circle([0, 0, 0], "x", 4, 5)
+    // let myCircle = new Circle([0, 0, 0], "x", 4, 5)
     
 
-    PlotData = myCircle.getDrawData()
+    // PlotData = myCircle.getDrawData()
+    let myCylinder = new Cylinder(math.matrix([1, 0, 0]), "x", 5, 5, 5)
+    PlotData = myCylinder.getDrawData()
     // let AxisData = GetCartesianAxes(AxisLimit);
     // PlotData.push(AxisData[0]);
     // PlotData.push(AxisData[1]);
@@ -227,7 +289,7 @@ function Main(PlotNew = false){
     // }else{
     //     TriangleOne.UpdatePlot("3DGraph", PlotData, AxisLimit);
     // }
-    myCircle.NewPlot("3DGraph", [PlotData], AxisLimit);
+    myCylinder.NewPlot("3DGraph", PlotData, AxisLimit);
 }
 
 
