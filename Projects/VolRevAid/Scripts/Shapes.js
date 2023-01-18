@@ -27,14 +27,7 @@ class Shape {
         return arrayOfPoints;
     }
 
-    NewPlot(GraphName, GraphData, AxisLimit){
-        Plotly.purge(GraphName);
-        Plotly.newPlot(GraphName, GraphData, setLayout('x', 'y', 'z', AxisLimit));
-    }
 
-    UpdatePlot(GraphName, GraphData, AxisLimit){
-        Plotly.react(GraphName, GraphData, setLayout('x', 'y', 'z', AxisLimit));
-    }
 }
 
 class Triangle extends Shape {
