@@ -5,20 +5,24 @@ class Scene{
      * @param {Number}  numCylinders    The number of cylinders to draw
      * @param {Number}  a               The lower limit of the integration
      * @param {Number}  b               The upper limit of the integration
+     * @param {String}  axis            The axis about which the rotation happens
      */
-    constructor(axisLimit, graphType, numCylinders, a, b){
+    constructor(axisLimit, graphType, numCylinders, a, b, axis){
         this.axisLimit = axisLimit
         this.n = numCylinders
         this.a = a
         this.b = b
         this.graph = this.getGraph(graphType)
         this.axes = new Axes(axisLimit)
-        this.cylinderList = this.getCylinders()
+        this.symmetryAxis = axis
+        this.cylinderList = this.updateCylinders()
+    
     }
 
     /**
      * Fetches graph object of given type
      * @param {String} graphType The name of the graph
+     * @returns {Graph}
      */
     getGraph(graphType){
         let graph
@@ -36,8 +40,62 @@ class Scene{
         return graph
     }
 
-    getCylinders(){
-        return 0
+    /**
+     * Get cylinder objects for scene
+     * @returns {Array<Cylinder>}
+     */
+    updateCylinders(){
+        if (this.n == 0){
+            return []
+        }else{
+            // get thickness of cylinders
+            var h = (Math.abs(this.b - this.a))/this.n;
+
+            var cylinderList = [];
+            var startPosition = this.getAxialVector(this.a, this.symmetryAxis);
+            var positionDifference = this.getAxialVector(h, this.symmetryAxis);
+            var currentPosition
+            var axialPosition
+
+            for (let i = 0; i < this.n; i++){
+                axialPosition = this.a + i*h
+                currentPosition = math.add(startPosition, math.multiply(positionDifference, i));
+                cylinderList.push(new Cylinder(currentPosition, this.symmetryAxis, this.graph.equation(axialPosition), 5, h));
+            }
+
+            return cylinderList;
+        }
+    }
+
+
+    getAxialVector(n, axis){
+        var position
+        switch(axis){
+            case "x":
+                position = [n, 0, 0]
+                break;
+            case "y":
+                position = [0, n, 0]
+                break;
+            case "z":
+                position = [0, 0, n]
+                break;
+            
+        }
+        return math.matrix(position)
+    }
+
+    set_a(a){
+        this.a = a;
+        this.updateCylinders();
+    }
+    set_b(b){
+        this.b = b;
+        this.updateCylinders();
+    }
+    set_n(n){
+        this.n = n;
+        this.updateCylinders();
     }
     
     setLayout(sometitlex, sometitley, sometitlez){
@@ -81,11 +139,13 @@ class Scene{
 
     newPlot(graphName){
         // acquire axes
-        let plotData = this.axes.getDrawData()
+        let plotData = this.axes.getDrawData();
         // acquire graph
-        plotData.push(this.graph.getDrawData("x", "z"))
+        plotData.push(this.graph.getDrawData("x", "z"));
         // acquire cylinders
-
+        for (let cylinder of this.cylinderList){
+            plotData = plotData.concat(cylinder.getDrawData());
+        }
 
         Plotly.purge(graphName);
         Plotly.newPlot(graphName, plotData, this.setLayout('x', 'y', 'z'));
@@ -101,7 +161,7 @@ class Scene{
 
 function main(plotNew = false){
 
-    let scene = new Scene(10, "sinusoid", 0, -5, 5)
+    let scene = new Scene(10, "sinusoid", 50, -5, 5, "x")
 
     if (plotNew){
         scene.newPlot("3DGraph");
@@ -113,10 +173,10 @@ function main(plotNew = false){
 
 
 
-function Initialise() {
+function initialise() {
 
 
     main(PlotNew = true); //update plots upon setup.  This is the first time graphs are run upon opening the page
 }
 
-$(document).ready(Initialise()); //Load initialise when document is ready.
+$(document).ready(initialise()); //Load initialise when document is ready.

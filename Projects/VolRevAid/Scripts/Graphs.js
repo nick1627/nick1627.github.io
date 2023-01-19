@@ -26,7 +26,6 @@ class Graph{
             yValues[i] = this.equation(xValues[i])
             zValues[i] = 0
         }
-        console.log(xValues[0])
         return [xValues, yValues, zValues]
     }
 

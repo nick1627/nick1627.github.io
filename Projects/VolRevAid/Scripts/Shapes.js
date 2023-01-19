@@ -65,14 +65,14 @@ class Circle extends Shape{
     * @param {math.matrix}    centre      Centre of the circle
     * @param {String}    normalAxis   Normal vector of circle in 3d space
     * @param {Number}   radius      The radius of the circle
-    * @param {Number}   angle       Angle between successive 'spokes' of circle in degrees
+    * @param {Number}   angle       Angle between successive 'spokes' of circle in radians
     */
     constructor(centre, normalAxis, radius, angle){
         super();
         this.centre = centre;
         this.normalAxis = normalAxis
         this.radius = radius;
-        this.angle = angle*Math.PI/180;
+        this.angle = angle;//*Math.PI/180;
         this.circumferencePoints = this.getCirclePoints();
     }
 
@@ -159,12 +159,9 @@ class Cylinder extends Shape{
                 break;
         }
 
-        
-
         this.firstCircle = new Circle(this.centre, this.normalAxis, this.radius, this.angle);
         this.secondCircle = new Circle(math.add(this.centre, axisVec), this.normalAxis, this.radius, this.angle);
 
-        
     }
 
     getDrawData(){
