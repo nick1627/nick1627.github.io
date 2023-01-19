@@ -83,6 +83,15 @@ class Graph{
 
         return lineData
     }
+
+    /**
+     * Use vector to evaluate equation instead of position on axis
+     * @param {math.matrix} position    vector position on axis
+     * @returns {Number}    
+     */
+    equation3D(position){
+        return this.equation(math.sum(position))
+    }
 }
 
 class Line extends Graph{

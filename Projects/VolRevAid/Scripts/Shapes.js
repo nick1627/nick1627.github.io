@@ -6,16 +6,16 @@ class Shape {
     * @param {Array<math.matrix>}     arrayOfPoints       Array of vectors for points that make up the shape.
     * @returns {Array<math.matrix>}                       Array of vectors for points that make up the shape once rotated
     */
-    rotateToNewAxis(newAxis, arrayOfPoints){
+    rotateToNewAxis(normalVector, arrayOfPoints){
         // Assume points are aligned with x axis initially
-        let rotationMatrix = math.matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
-        if (newAxis != "x"){
-            switch(newAxis){
-                case "y":
+        let rotationMatrix
+        if (normalVector != math.matrix([1, 0, 0])){
+            switch(normalVector){
+                case math.matrix([0, 1, 0]):
                     // rotate about z axis by 90 degrees
                     rotationMatrix = math.matrix([[0, -1, 0], [1, 0, 0], [0, 0, 1]]);
                     break;
-                case "z":
+                case math.matrix([0, 0, 1]):
                     // rotate about y axis by -90 degrees
                     rotationMatrix = math.matrix([[0, 0, -1], [0, 1, 0], [1, 0, 0]]);
                     break;
@@ -63,14 +63,14 @@ class Circle extends Shape{
     /**
     * Create circle
     * @param {math.matrix}    centre      Centre of the circle
-    * @param {String}    normalAxis   Normal vector of circle in 3d space
+    * @param {math.matrix}    normalVector   Normal vector of circle in 3d space
     * @param {Number}   radius      The radius of the circle
-    * @param {Number}   angle       Angle between successive 'spokes' of circle in radians
+    * @param {Number}   angle       Angle between successive 'spokes' of circle in degrees
     */
-    constructor(centre, normalAxis, radius, angle){
+    constructor(centre, normalVector, radius, angle){
         super();
         this.centre = centre;
-        this.normalAxis = normalAxis
+        this.normalVector = normalVector
         this.radius = radius;
         this.angle = angle;//*Math.PI/180;
         this.circumferencePoints = this.getCirclePoints();
@@ -89,7 +89,7 @@ class Circle extends Shape{
         // Have the circumference points at/around the origin
         // Now transform to where the circle really is
         // First rotate
-        circumferencePoints = this.rotateToNewAxis(this.normalAxis, circumferencePoints)
+        circumferencePoints = this.rotateToNewAxis(this.normalVector, circumferencePoints)
         // Now translate
         for (let i = 0; i < circumferencePoints.length; i++){
             circumferencePoints[i] = math.add(circumferencePoints[i], this.centre)
@@ -132,36 +132,29 @@ class Cylinder extends Shape{
     /**
     * Create cylinder (two circles with connecting tube)
     * @param {math.matrix}    centre      Coordinates of centre of first circle
-    * @param {String}    normalAxis     Vector from centre of first circle to centre of second
+    * @param {math.matrix}    axialVector     Vector from centre of first circle to centre of second
     * @param {Number}   radius      The radius of the circles
     * @param {Number}   angle       Angle between successive 'spokes' of circles in degrees
     * @param {Number}   thickness   Thickness of the cylinder
     */
 
-    constructor(centre, normalAxis, radius, angle, thickness){
+    constructor(origin, axialVector, radius, angle){
         super();
-        this.centre = centre;
-        this.normalAxis = normalAxis;
+        this.origin = origin;
+        this.axialVector = axialVector;
         this.radius = radius;
         this.angle = angle*Math.PI/180;
-        this.thickness = thickness;
+        this.thickness = math.norm(axialVector);
+        this.normalVector = math.round(math.divide(axialVector, this.thickness))
+        
 
-        let axisVec = [0, 0, 0];
-        switch (normalAxis){
-            case "x":
-                axisVec[0] = thickness;
-                break;
-            case "y":
-                axisVec[1] = thickness;
-                break;
-            case "z":
-                axisVec[2] = thickness;
-                break;
-        }
+        this.firstCircle = new Circle(this.origin, this.normalVector, this.radius, this.angle);
+        this.secondCircle = new Circle(math.add(this.origin, this.axialVector), this.normalVector, this.radius, this.angle);
 
-        this.firstCircle = new Circle(this.centre, this.normalAxis, this.radius, this.angle);
-        this.secondCircle = new Circle(math.add(this.centre, axisVec), this.normalAxis, this.radius, this.angle);
+    }
 
+    getVolume(){
+        return Math.PI*this.radius*this.radius*this.thickness
     }
 
     getDrawData(){
@@ -216,4 +209,29 @@ class Cylinder extends Shape{
         return drawData
 
     }
+}
+
+
+class ChainableCylinder extends Cylinder{
+    constructor(origin, axialVector, angle, graph, numCylinders, cylinderIndex, previousCylinder = null){
+        let radius = graph.equation3D(origin)
+        super(origin, axialVector, radius, angle)
+
+        this.previousCylinder = previousCylinder
+        this.cylinderIndex = cylinderIndex
+        if (cylinderIndex < numCylinders){
+            this.nextCylinder = new ChainableCylinder(origin, axialVector, angle, graph, numCylinders, cylinderIndex - 1, this)
+        }else{
+            this.nextCylinder = null
+        }
+    }
+
+    getChainVolume(){
+        if (this.nextCylinder == null){
+            return this.getVolume()
+        }else{
+            return this.getVolume + this.nextCylinder.getChainVolume()
+        }
+    }
+
 }
