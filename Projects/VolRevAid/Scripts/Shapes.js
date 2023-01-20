@@ -8,23 +8,20 @@ class Shape {
     */
     rotateToNewAxis(normalVector, arrayOfPoints){
         // Assume points are aligned with x axis initially
+
         let rotationMatrix
-        if (normalVector != math.matrix([1, 0, 0])){
-            switch(normalVector){
-                case math.matrix([0, 1, 0]):
-                    // rotate about z axis by 90 degrees
-                    rotationMatrix = math.matrix([[0, -1, 0], [1, 0, 0], [0, 0, 1]]);
-                    break;
-                case math.matrix([0, 0, 1]):
-                    // rotate about y axis by -90 degrees
-                    rotationMatrix = math.matrix([[0, 0, -1], [0, 1, 0], [1, 0, 0]]);
-                    break;
+
+        if (!(math.norm(math.compare(normalVector, math.matrix([1, 0, 0]))) == 0)){
+            if (math.norm(math.compare(normalVector, math.matrix([0, 1, 0]))) == 0){
+                rotationMatrix = math.matrix([[0, -1, 0], [1, 0, 0], [0, 0, 1]]);
+            }else{
+                rotationMatrix = math.matrix([[0, 0, -1], [0, 1, 0], [1, 0, 0]]);
             }
             for (let i = 0; i < arrayOfPoints.length; i++){
                 arrayOfPoints[i] = math.multiply(rotationMatrix, arrayOfPoints[i]);
             }
         }
-        return arrayOfPoints;
+        return arrayOfPoints
     }
 
 
@@ -135,7 +132,6 @@ class Cylinder extends Shape{
     * @param {math.matrix}    axialVector     Vector from centre of first circle to centre of second
     * @param {Number}   radius      The radius of the circles
     * @param {Number}   angle       Angle between successive 'spokes' of circles in degrees
-    * @param {Number}   thickness   Thickness of the cylinder
     */
 
     constructor(origin, axialVector, radius, angle){
@@ -213,14 +209,26 @@ class Cylinder extends Shape{
 
 
 class ChainableCylinder extends Cylinder{
-    constructor(origin, axialVector, angle, graph, numCylinders, cylinderIndex, previousCylinder = null){
+    /**
+    * Create cylinder (two circles with connecting tube)
+    * @param {math.matrix}    origin      Coordinates of centre of first circle
+    * @param {math.matrix}    axialVector     Vector from centre of first circle to centre of second
+    * @param {Number}   angle       Angle between successive 'spokes' of circles in degrees
+    * @param {Graph}    graph       The graph to fit the cylinders to
+    * @param {Number}   numCylinders the number of cylinders in the chain
+    * @param {Number}   cylinderIndex the index of the current cylinder
+    * @param {ChainableCylinder} previousCylinder a reference to the previous cylinder (optional)
+
+    */
+    constructor(origin, axialVector, angle, graph, numCylinders, cylinderIndex = 0, previousCylinder = null){
+        console.log(cylinderIndex)
         let radius = graph.equation3D(origin)
         super(origin, axialVector, radius, angle)
 
         this.previousCylinder = previousCylinder
         this.cylinderIndex = cylinderIndex
-        if (cylinderIndex < numCylinders){
-            this.nextCylinder = new ChainableCylinder(origin, axialVector, angle, graph, numCylinders, cylinderIndex - 1, this)
+        if (cylinderIndex < (numCylinders - 1)){
+            this.nextCylinder = new ChainableCylinder(math.add(origin, axialVector), axialVector, angle, graph, numCylinders, cylinderIndex + 1, this)
         }else{
             this.nextCylinder = null
         }
@@ -231,6 +239,14 @@ class ChainableCylinder extends Cylinder{
             return this.getVolume()
         }else{
             return this.getVolume + this.nextCylinder.getChainVolume()
+        }
+    }
+
+    getChainDrawData(){
+        if (this.nextCylinder == null){
+            return this.getDrawData()
+        }else{
+            return this.getDrawData().concat(this.nextCylinder.getChainDrawData())
         }
     }
 

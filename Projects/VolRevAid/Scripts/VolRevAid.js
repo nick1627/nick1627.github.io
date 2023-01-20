@@ -15,9 +15,11 @@ class Scene{
         this.graph = this.getGraph(graphType)
         this.axes = new Axes(axisLimit)
         this.symmetryAxis = axis
-        this.cylinderList = this.updateCylinders()
+        // this.cylinderList = this.updateCylinders()
+        this.firstCylinder = this.updateCylinders()
     
     }
+
 
     /**
      * Fetches graph object of given type
@@ -44,26 +46,16 @@ class Scene{
      * Get cylinder objects for scene
      * @returns {Array<Cylinder>}
      */
+
     updateCylinders(){
+        
         if (this.n == 0){
-            return []
+            return null;
         }else{
-            // get thickness of cylinders
+            var origin = this.getAxialVector(this.a, this.symmetryAxis)
             var h = (Math.abs(this.b - this.a))/this.n;
-
-            var cylinderList = [];
-            var startPosition = this.getAxialVector(this.a, this.symmetryAxis);
-            var positionDifference = this.getAxialVector(h, this.symmetryAxis);
-            var currentPosition
-            var axialPosition
-
-            for (let i = 0; i < this.n; i++){
-                axialPosition = this.a + i*h
-                currentPosition = math.add(startPosition, math.multiply(positionDifference, i));
-                cylinderList.push(new Cylinder(currentPosition, this.symmetryAxis, this.graph.equation(axialPosition), 5, h));
-            }
-
-            return cylinderList;
+            var axialVector = this.getAxialVector(h, this.symmetryAxis)
+            return new ChainableCylinder(origin, axialVector, 5, this.graph, this.n)
         }
     }
 
@@ -143,9 +135,10 @@ class Scene{
         // acquire graph
         plotData.push(this.graph.getDrawData("x", "z"));
         // acquire cylinders
-        for (let cylinder of this.cylinderList){
-            plotData = plotData.concat(cylinder.getDrawData());
-        }
+        // for (let cylinder of this.cylinderList){
+        //     plotData = plotData.concat(cylinder.getDrawData());
+        // }
+        plotData = plotData.concat(this.firstCylinder.getChainDrawData())
 
         Plotly.purge(graphName);
         Plotly.newPlot(graphName, plotData, this.setLayout('x', 'y', 'z'));
@@ -161,7 +154,7 @@ class Scene{
 
 function main(plotNew = false){
 
-    let scene = new Scene(10, "sinusoid", 50, -5, 5, "x")
+    let scene = new Scene(10, "quadratic", 50, -5, 5, "x")
 
     if (plotNew){
         scene.newPlot("3DGraph");

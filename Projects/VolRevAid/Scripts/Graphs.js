@@ -102,7 +102,7 @@ class Line extends Graph{
 
 class Quadratic extends Graph{
     equation(x){
-        return x*x
+        return 0.1*x*x
     }
 }
 
