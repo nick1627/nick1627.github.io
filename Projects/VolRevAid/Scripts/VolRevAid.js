@@ -16,7 +16,7 @@ class Scene{
         this.axes = new Axes(axisLimit)
         this.symmetryAxis = axis
         // this.cylinderList = this.updateCylinders()
-        this.firstCylinder = this.updateCylinders()
+        this.firstCylinder = this.updateCylinders(true)
     
     }
 
@@ -29,7 +29,7 @@ class Scene{
     getGraph(graphType){
         let graph
         switch(graphType){
-            case "line":
+            case "linear":
                 graph = new Line(-this.axisLimit, this.axisLimit, 0.1);
                 break;
             case "quadratic":
@@ -46,16 +46,24 @@ class Scene{
      * Get cylinder objects for scene
      * @returns {Array<Cylinder>}
      */
-
-    updateCylinders(){
-        
+    updateCylinders(returnCylinder = false){
         if (this.n == 0){
-            return null;
+            if (returnCylinder){
+                return null;
+            }else{
+                this.firstCylinder = null;
+            }
         }else{
             var origin = this.getAxialVector(this.a, this.symmetryAxis)
             var h = (Math.abs(this.b - this.a))/this.n;
             var axialVector = this.getAxialVector(h, this.symmetryAxis)
-            return new ChainableCylinder(origin, axialVector, 5, this.graph, this.n)
+
+            if (returnCylinder){
+                return new ChainableCylinder(origin, axialVector, 5, this.graph, this.n);
+            }else{
+                this.firstCylinder = new ChainableCylinder(origin, axialVector, 5, this.graph, this.n);
+            }
+            
         }
     }
 
@@ -88,6 +96,22 @@ class Scene{
     set_n(n){
         this.n = n;
         this.updateCylinders();
+    }
+
+    /**
+     * Update all the input values from the html page
+     */
+    updateInputs(){
+        this.a = document.getElementById("a_input").value;
+        this.b = document.getElementById("b_input").value;
+        this.n = document.getElementById("n_input").value;
+        this.graph = this.getGraph(document.getElementById("graphSelector").value)
+    }
+
+    updateAll(graphName){
+        this.updateInputs()
+        this.updateCylinders()
+        this.updatePlot(graphName, false)
     }
     
     setLayout(sometitlex, sometitley, sometitlez){
@@ -131,47 +155,55 @@ class Scene{
         return newLayout;
     }
 
-    newPlot(graphName){
+    updatePlot(graphName, plotNew){
         // acquire axes
         let plotData = this.axes.getDrawData();
         // acquire graph
         plotData.push(this.graph.getDrawData("x", "z"));
         // acquire cylinders
-        // for (let cylinder of this.cylinderList){
-        //     plotData = plotData.concat(cylinder.getDrawData());
-        // }
-        plotData = plotData.concat(this.firstCylinder.getChainDrawData())
+        if (this.firstCylinder != null){
+            plotData = plotData.concat(this.firstCylinder.getChainDrawData())
+        }
 
-        Plotly.purge(graphName);
-        Plotly.newPlot(graphName, plotData, this.setLayout('x', 'y', 'z'));
-    }
+        if (plotNew){
+            Plotly.purge(graphName);
+            Plotly.newPlot(graphName, plotData, this.setLayout('x', 'y', 'z'));
+        }else{
+            Plotly.react(graphName, plotData, this.setLayout('x', 'y', 'z'));
+        }
 
-    updatePlot(graphName){
-        Plotly.react(graphName, plotData, this.setLayout('x', 'y', 'z'));
+        
     }
 }
 
-
-
-
-function main(plotNew = false){
-
-    let scene = new Scene(10, "quadratic", 50, -5, 5, "x")
-
-    if (plotNew){
-        scene.newPlot("graph3D");
-    }else{
-        scene.updatePlot("graph3D")
-    }
-
-}
 
 
 
 function initialise() {
+    let scene = new Scene(10, "quadratic", 50, -5, 5, "x")
+    // set up UI
+    $("#graphSelector").on("input", function(){
+        //update 
+        scene.updateAll("graph3D");
+    });
 
+    $("#a_input").on("input", function(){
+        //update 
+        scene.updateAll("graph3D");
+    });
 
-    main(PlotNew = true); //update plots upon setup.  This is the first time graphs are run upon opening the page
+    $("#b_input").on("input", function(){
+        //update 
+        scene.updateAll("graph3D");
+    });
+
+    $("#n_input").on("input", function(){
+        //update 
+        scene.updateAll("graph3D");
+    });
+
+    // update plot for first time
+    scene.updatePlot("graph3D", true)
 }
 
 $(document).ready(initialise()); //Load initialise when document is ready.
