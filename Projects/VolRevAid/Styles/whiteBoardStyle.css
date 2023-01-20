@@ -1,0 +1,26 @@
+html{
+    height:100%;/* make sure it is at least as tall as the viewport */
+    box-sizing: border-box;
+}
+body{
+    background-color: beige;
+    height:100%
+}
+
+
+
+
+
+.sideBar{
+   background-color: rgb(228, 213, 192);
+   height: 100%;
+}
+
+.mainSection{
+    box-sizing: border-box;
+}
+
+#graph3D{
+    margin: 10px;
+}
+

@@ -221,7 +221,6 @@ class ChainableCylinder extends Cylinder{
 
     */
     constructor(origin, axialVector, angle, graph, numCylinders, cylinderIndex = 0, previousCylinder = null){
-        console.log(cylinderIndex)
         let radius = graph.equation3D(origin)
         super(origin, axialVector, radius, angle)
 

@@ -100,6 +100,8 @@ class Scene{
             margin: {
                 l: 1, r: 1, b: 10, t: 1, pad: 0
             },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
             dragmode: 'turntable',
             scene: {
                 
@@ -121,7 +123,7 @@ class Scene{
     
                 camera: {
                     up: {x: 0, y: 0, z: 1},//sets which way is up
-                    eye: {x: 1, y: 1, z: 1}//adjust camera starting view
+                    eye: {x: 0.5, y: -1, z: 0.5}//adjust camera starting view
                 }
             },
         };
@@ -157,9 +159,9 @@ function main(plotNew = false){
     let scene = new Scene(10, "quadratic", 50, -5, 5, "x")
 
     if (plotNew){
-        scene.newPlot("3DGraph");
+        scene.newPlot("graph3D");
     }else{
-        scene.updatePlot("3DGraph")
+        scene.updatePlot("graph3D")
     }
 
 }
