@@ -127,6 +127,8 @@ class Scene{
             paper_bgcolor: 'rgba(0,0,0,0)',
             plot_bgcolor: 'rgba(0,0,0,0)',
             dragmode: 'turntable',
+            
+            
             scene: {
                 
                 aspectmode: "cube",
@@ -167,7 +169,7 @@ class Scene{
 
         if (plotNew){
             Plotly.purge(graphName);
-            Plotly.newPlot(graphName, plotData, this.setLayout('x', 'y', 'z'));
+            Plotly.newPlot(graphName, plotData, this.setLayout('x', 'y', 'z'), {responsive: true, displayModeBar: true,showspikes: false});
         }else{
             Plotly.react(graphName, plotData, this.setLayout('x', 'y', 'z'));
         }
@@ -180,7 +182,7 @@ class Scene{
 
 
 function initialise() {
-    let scene = new Scene(10, "quadratic", 50, -5, 5, "x")
+    let scene = new Scene(10, "quadratic", 0, -5, 5, "x")
     // set up UI
     $("#graphSelector").on("input", function(){
         //update 

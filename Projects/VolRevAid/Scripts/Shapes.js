@@ -107,6 +107,7 @@ class Circle extends Shape{
             i: [],
             j: [],
             k: [],
+            facecolor: Array(this.circumferencePoints.length-1).fill("#aeedd3"),
         });
 
         let length = this.circumferencePoints.length;
@@ -173,6 +174,7 @@ class Cylinder extends Shape{
             i: [],
             j: [],
             k: [],
+            facecolor: Array(2*(this.firstCircle.circumferencePoints.length-1)).fill("#b9d4f9"),
         });
 
         let length = this.firstCircle.circumferencePoints.length;

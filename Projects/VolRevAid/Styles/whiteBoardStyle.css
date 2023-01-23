@@ -1,6 +1,9 @@
+* {
+    box-sizing: border-box;
+}
+
 html{
     height:100%;/* make sure it is at least as tall as the viewport */
-    box-sizing: border-box;
 }
 body{
     background-color: beige;
@@ -14,6 +17,7 @@ body{
 .sideBar{
    background-color: rgb(228, 213, 192);
    height: 100%;
+   padding: 5px;
 }
 
 .mainSection{
