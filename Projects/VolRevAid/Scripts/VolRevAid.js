@@ -1,4 +1,4 @@
-class Scene{
+class Scene3D{
     /**
      * @param {Number} axisLimit    max number on axis
      * @param {String}   graphType   The graph to plot
@@ -17,7 +17,9 @@ class Scene{
         this.symmetryAxis = axis
         // this.cylinderList = this.updateCylinders()
         this.firstCylinder = this.updateCylinders(true)
-    
+        this.actualVolume = this.getActualVolume()
+        this.volumeGraph = new VolumeGraph(this.actualVolume)
+        
     }
 
 
@@ -67,6 +69,10 @@ class Scene{
         }
     }
 
+    getActualVolume(){
+        return 3
+    }
+
 
     getAxialVector(n, axis){
         var position
@@ -112,6 +118,7 @@ class Scene{
         this.updateInputs()
         this.updateCylinders()
         this.updatePlot(graphName, false)
+        this.volumeGraph.updateAll()
     }
     
     setLayout(sometitlex, sometitley, sometitlez){
@@ -135,7 +142,7 @@ class Scene{
                 // xaxis: {range: [-0.05, 0.05], title: sometitlex},//, showticklabels: false},
                 // yaxis: {range: [-0.01, 0.01], title: sometitley},//, showticklabels: false},
                 // zaxis: {range: [-0.01, 0.01], title: sometitlez},//, showticklabels: false},
-                xaxis: {range: [-this.axisLimit, this.axisLimit], title: sometitlex, showbackground: false, showgrid: false},//, showticklabels: false},
+                xaxis: {range: [-this.axisLimit, this.axisLimit], title: sometitlex, showbackground: false, showgrid: false, zeroline:true, showline:true},//, showticklabels: false},
                 yaxis: {range: [-this.axisLimit, this.axisLimit], title: sometitley, showbackground: false, showgrid: false},//, showticklabels: false},
                 zaxis: {range: [-this.axisLimit, this.axisLimit], title: sometitlez, showbackground: false, showgrid: false},//, showticklabels: false},
                 
@@ -159,7 +166,7 @@ class Scene{
 
     updatePlot(graphName, plotNew){
         // acquire axes
-        let plotData = this.axes.getDrawData();
+        let plotData = []//this.axes.getDrawData();
         // acquire graph
         plotData.push(this.graph.getDrawData("x", "z"));
         // acquire cylinders
@@ -170,8 +177,10 @@ class Scene{
         if (plotNew){
             Plotly.purge(graphName);
             Plotly.newPlot(graphName, plotData, this.setLayout('x', 'y', 'z'), {responsive: true, displayModeBar: true,showspikes: false});
+            this.volumeGraph.newGraph()
         }else{
             Plotly.react(graphName, plotData, this.setLayout('x', 'y', 'z'));
+            this.volumeGraph.updateGraph()
         }
 
         
@@ -179,33 +188,63 @@ class Scene{
 }
 
 
+class PageManager{
+    constructor(){
+        this.a = -5
+        this.b = 5
+        this.n = 0
+        this.graph = "quadratic"
+        // 3d graph object
+        let scene3D = new Scene(this, "x")
+        // 2d graph object
+        let volumeGraph = new VolumeGraph()
+
+    }
+    checkForNewInputs(){
+
+    }
+    newAll(){
+        // plots/loads everything from scratch
+    }
+    updateAll(){
+        // updates data and plots
+        this.checkForNewInputs()
+    }
+}
+
 
 
 function initialise() {
-    let scene = new Scene(10, "quadratic", 0, -5, 5, "x")
+    let manager = new PageManager()
     // set up UI
     $("#graphSelector").on("input", function(){
         //update 
-        scene.updateAll("graph3D");
+        manager.updateAll();
     });
 
     $("#a_input").on("input", function(){
         //update 
-        scene.updateAll("graph3D");
+        manager.updateAll();
     });
 
     $("#b_input").on("input", function(){
         //update 
-        scene.updateAll("graph3D");
+        manager.updateAll();
     });
 
     $("#n_input").on("input", function(){
         //update 
-        scene.updateAll("graph3D");
+        manager.updateAll();
     });
 
+    $("#clearButton").on("click", function(){
+        //update 
+        manager.updateAll();
+    });
+
+
     // update plot for first time
-    scene.updatePlot("graph3D", true)
+    manager.newAll()
 }
 
 $(document).ready(initialise()); //Load initialise when document is ready.
