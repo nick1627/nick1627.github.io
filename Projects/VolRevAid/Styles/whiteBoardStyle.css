@@ -4,6 +4,8 @@
 
 html{
     height:100%;/* make sure it is at least as tall as the viewport */
+    padding:0%;
+    overflow: hidden;
 }
 body{
     background-color: beige;
@@ -16,9 +18,11 @@ body{
 
 
 .sideBar{
-   background-color: rgb(228, 213, 192);
-   height: 100%;
-   padding: 5px;
+    width:20%; 
+    float:left;
+    background-color: rgb(228, 213, 192);
+    height: 100%;
+    padding: 5px;
 }
 
 .formRow{
@@ -45,13 +49,14 @@ input{
     float:center;
 }
 
-
-.mainSection{
-    box-sizing: border-box;
+#cylinderVolumeText{
+    width:50%;
+    float:left;
 }
 
-#graph3D{
-    margin: 10px;
+#trueVolumeText{
+    width:50%;
+    float:right;
 }
 
 #graph2D{
@@ -59,5 +64,20 @@ input{
     margin: 1px;
     background-color: beige;
     clear:both;
+    margin-top:10px
 }
+
+
+.mainSection{
+    width:80%;
+    height:100%;
+    float:right;
+    box-sizing: border-box;
+}
+
+#graph3D{
+    margin: 10px;
+}
+
+
 

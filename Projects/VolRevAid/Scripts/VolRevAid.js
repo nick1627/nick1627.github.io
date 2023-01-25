@@ -25,6 +25,8 @@ class PageManager{
         // only happens at start of page loading
         this.scene.updatePlot(true)
         this.volumeGraph.newGraph()
+
+        this.updateTrueVolumeText(this.scene.graph.getIntegralVolume(this.a, this.b))
     }
 
     hardUpdate(){
@@ -33,8 +35,13 @@ class PageManager{
         this.scene.updateGraph(this.graphType)
         this.scene.updateCylinders()
         this.scene.updatePlot(false)
-        this.resetVolumeGraph()
-        this.volumeGraph.addPoint(this.n, this.getTotalCylinderVolume())
+        
+        var totalVol = this.getTotalCylinderVolume()
+        var trueVol = this.scene.graph.getIntegralVolume(this.a, this.b)
+        this.volumeGraph.reset(trueVol)
+        this.volumeGraph.addPoint(this.n, totalVol)
+        this.updateCylinderVolumeText(totalVol)
+        this.updateTrueVolumeText(trueVol)
     }
 
     softUpdate(){
@@ -42,7 +49,9 @@ class PageManager{
         this.updateInputs()
         this.scene.updateCylinders()
         this.scene.updatePlot(false)
-        this.volumeGraph.addPoint(this.n, this.getTotalCylinderVolume())
+        var totalVol = this.getTotalCylinderVolume()
+        this.volumeGraph.addPoint(this.n, totalVol)
+        this.updateCylinderVolumeText(totalVol)
     }
 
     resetVolumeGraph(){
@@ -57,7 +66,15 @@ class PageManager{
         this.a = document.getElementById("a_input").value;
         this.b = document.getElementById("b_input").value;
         this.n = document.getElementById("n_input").value;
-        this.graph = document.getElementById("graphSelector").value;
+        this.graphType = document.getElementById("graphSelector").value;
+    }
+
+    updateCylinderVolumeText(newValue){
+        document.getElementById("cylinderVolumeText").innerHTML = String(newValue);
+    }
+
+    updateTrueVolumeText(newValue){
+        document.getElementById("trueVolumeText").innerHTML = String(newValue);
     }
 }
 
@@ -167,9 +184,10 @@ class Plot3D{
             dragmode: 'turntable',
             
             legend: {
-                x: 0.9,
+                x: 1,
+                y: 0,
+                xanchor: "right",
                 yanchor: "bottom",
-                y: 0.1,
             },
             scene: {
                 
@@ -228,8 +246,8 @@ class Plot2D{
      * @param {Number} actualVolume the true volume of the revolved graph
      */
     constructor(actualVolume){
-        this.n = []
-        this.vol = []
+        this.n = [0]
+        this.vol = [0]
         this.actualVolume = actualVolume
     }
 
@@ -273,8 +291,8 @@ class Plot2D{
     }
 
     clearData(){
-        this.n = []
-        this.vol = []
+        this.n = [0]
+        this.vol = [0]
     }
 
     getPlotData(){
@@ -287,6 +305,7 @@ class Plot2D{
             y: [this.actualVolume, this.actualVolume],
             type: 'scatter',
             mode:"lines",
+            name:"True",
             line: {
                 width: 1,
                 color: "red",
@@ -298,6 +317,7 @@ class Plot2D{
             y: this.vol,
             type: 'scatter',
             mode:"lines+markers",
+            name:"Cylinders",
             line: {
                 width: 1,
                 color: "blue",
@@ -323,18 +343,20 @@ class Plot2D{
     setLayout() {
         const new_layout = {
             autosize: true,
-            // margin: {l: 45, r: 30, t: 30, b: 30},
+            margin: {l: 45, r: 30, t: 30, b: 30},
             // hovermode: "closest",
-            showlegend: false,
+            showlegend: true,
+            legend:{
+                xanchor:"right",
+            },
             // xaxis: {range: [-100, 100], zeroline: true, title: sometitlex},
             // yaxis: {range: [-100, 100], zeroline: true, title: sometitley},
-            xaxis: {title: "Number of cylinders"},
-            yaxis: {title: "Total cylinder volume"},
+            xaxis: {title: "Number of cylinders", rangemode:"nonnegative"},
+            yaxis: {title: "Volume", rangemode:"nonnegative"},
             aspectratio: {x: 1, y: 1},
-            rangemode:"nonnegative"
-            // margin: {
-            //     l: 10, r: 5, b: 10, t: 5, pad: 0
-            // },
+            // rangemode:"nonnegative",
+
+           
             // rangemode:"nonnegative",
         };
         return new_layout;
