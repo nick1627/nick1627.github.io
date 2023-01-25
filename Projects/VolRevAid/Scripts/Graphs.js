@@ -28,6 +28,14 @@ class Graph{
         }
         return [xValues, yValues, zValues]
     }
+    /** Get volume that results from integration between the limits a and b
+     * @param {Number} a the lower limit
+     * @param {Number} b the upper limit
+     * @returns {Number}
+     */
+    getIntegralVolume(a, b){
+        return Math.PI*(this.integralOfSquare(b) - this.integralOfSquare(a))
+    }
 
     getDrawData(inputAxis, outputAxis){
         let lineData = ({
@@ -98,17 +106,26 @@ class Line extends Graph{
     equation(x){
         return x
     }
+    integralOfSquare(x){
+        return x**3/3
+    }
 }
 
 class Quadratic extends Graph{
     equation(x){
         return 0.1*x*x
     }
+    integralOfSquare(x){
+        return (x**5)/500
+    }
 }
 
 class Sine extends Graph{
     equation(x){
         return Math.sin(x)
+    }
+    integralOfSquare(x){
+        return 0.5*(x - 0.5*Math.sin(2*x))
     }
 }
 
@@ -164,89 +181,3 @@ class Axes{
     }
 }
 
-
-
-class VolumeGraph{
-    /**
-     * The graph that displays volumes against n is managed via this class
-     * @param {Number} actualVolume the true volume of the revolved graph
-     */
-    constructor(actualVolume){
-        this.n = []
-        this.vol = []
-        this.actualVolume = actualVolume
-    }
-    /**
-     * @param {Number} n    number of cylinders
-     * @param {Number} cylinderVolume  volume of all cylinders
-     */
-    updateData(n, cylinderVolume){
-        this.n.push(n);
-        this.n.push(cylinderVolume);
-        this.sortData()
-    }
-
-    addPoint(n, cylinderVolume){
-        this.updateData(n, cylinderVolume)
-        this.updateGraph()
-    }
-
-    sortData(){
-        this.n.sort(function(a, b){return a - b});
-        this.vol.sort(function(a, b){return a - b});
-    }
-
-    updateActualVolume(actualVolume){
-        this.actualVolume = actualVolume
-    }
-
-    /**
-     * Clear everything about graph, for purpose of having new graph
-     * @param {Number} actualVolume true volume of new revolved graph
-     */
-    clearAll(actualVolume){
-        this.clearData()
-        this.updateActualVolume(actualVolume)
-        this.updateGraph()
-    }
-
-    clearData(){
-        this.n = []
-        this.vol = []
-        this.updateGraph()
-    }
-
-    getPlotData(){
-        var trace1 = {
-            x: this.n,
-            y: this.vol,
-            type: 'scatter'
-        };
-        var data = [trace1];
-        return data
-    }
-
-    newGraph(){
-        Plotly.purge("graph2D");
-        Plotly.newPlot("graph2D", this.getPlotData(), this.setLayout());
-    }
-
-    updateGraph(){
-        Plotly.react("graph2D", this.getPlotData(), this.setLayout());
-    }
-
-    setLayout() {
-        const new_layout = {
-            autosize: true,
-            // margin: {l: 45, r: 30, t: 30, b: 30},
-            // hovermode: "closest",
-            showlegend: false,
-            // xaxis: {range: [-100, 100], zeroline: true, title: sometitlex},
-            // yaxis: {range: [-100, 100], zeroline: true, title: sometitley},
-            xaxis: {title: "Number of cylinders"},
-            yaxis: {title: "Total cylinder volume"},
-            aspectratio: {x: 1, y: 1}
-        };
-        return new_layout;
-    }
-}

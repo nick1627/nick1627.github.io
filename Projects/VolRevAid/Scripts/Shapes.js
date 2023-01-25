@@ -154,6 +154,10 @@ class Cylinder extends Shape{
         return Math.PI*this.radius*this.radius*this.thickness
     }
 
+    getSpeedyVolume(){
+        return this.radius**2
+    }
+
     getDrawData(){
         let drawData = []
         // get the draw data for both circles
@@ -236,10 +240,14 @@ class ChainableCylinder extends Cylinder{
     }
 
     getChainVolume(){
+        return Math.PI*this.thickness*this.getChainSpeedyVolume()
+    }
+
+    getChainSpeedyVolume(){
         if (this.nextCylinder == null){
-            return this.getVolume()
+            return this.getSpeedyVolume()
         }else{
-            return this.getVolume + this.nextCylinder.getChainVolume()
+            return this.getSpeedyVolume() + this.nextCylinder.getChainSpeedyVolume()
         }
     }
 

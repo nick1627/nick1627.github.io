@@ -1,4 +1,69 @@
-class Scene3D{
+class PageManager{
+    constructor(){
+        this.a = -5
+        this.b = 5
+        this.n = 0
+        this.graphType = "quadratic"
+        // 3d graph object
+        this.scene = new Plot3D(this)
+        // 2d graph object
+        this.volumeGraph = new Plot2D(this.scene.graph.getIntegralVolume(this.a, this.b))
+
+    }
+
+    getTotalCylinderVolume(){
+        if (this.n != 0){
+            return this.scene.firstCylinder.getChainVolume()
+        }else{
+            return 0
+        }
+    }
+   
+    newAll(){
+        // plots/loads everything from scratch
+        // the most extreme reset possible (without recreating main objects)
+        // only happens at start of page loading
+        this.scene.updatePlot(true)
+        this.volumeGraph.newGraph()
+    }
+
+    hardUpdate(){
+        // updates data and plots when the true volume has changed
+        this.updateInputs()
+        this.scene.updateGraph(this.graphType)
+        this.scene.updateCylinders()
+        this.scene.updatePlot(false)
+        this.resetVolumeGraph()
+        this.volumeGraph.addPoint(this.n, this.getTotalCylinderVolume())
+    }
+
+    softUpdate(){
+        // updates data and plots when only cylinder volume has changed
+        this.updateInputs()
+        this.scene.updateCylinders()
+        this.scene.updatePlot(false)
+        this.volumeGraph.addPoint(this.n, this.getTotalCylinderVolume())
+    }
+
+    resetVolumeGraph(){
+        this.volumeGraph.reset(this.scene.graph.getIntegralVolume(this.a, this.b))
+    }
+
+
+    /**
+     * Update all the input values from the html page
+     */
+    updateInputs(){
+        this.a = document.getElementById("a_input").value;
+        this.b = document.getElementById("b_input").value;
+        this.n = document.getElementById("n_input").value;
+        this.graph = document.getElementById("graphSelector").value;
+    }
+}
+
+
+
+class Plot3D{
     /**
      * @param {Number} axisLimit    max number on axis
      * @param {String}   graphType   The graph to plot
@@ -7,28 +72,49 @@ class Scene3D{
      * @param {Number}  b               The upper limit of the integration
      * @param {String}  axis            The axis about which the rotation happens
      */
-    constructor(axisLimit, graphType, numCylinders, a, b, axis){
-        this.axisLimit = axisLimit
-        this.n = numCylinders
-        this.a = a
-        this.b = b
-        this.graph = this.getGraph(graphType)
-        this.axes = new Axes(axisLimit)
-        this.symmetryAxis = axis
-        // this.cylinderList = this.updateCylinders()
-        this.firstCylinder = this.updateCylinders(true)
-        this.actualVolume = this.getActualVolume()
-        this.volumeGraph = new VolumeGraph(this.actualVolume)
-        
+    constructor(manager){
+        this.manager = manager;
+        this.axisLimit = 10;
+     
+        this.updateGraph(this.manager.graphType);
+
+        this.axes = new Axes(this.axisLimit);
+        this.symmetryAxis = "x";
+        this.firstCylinder = this.updateCylinders(true);
     }
 
+
+    /**
+     * Get cylinder objects for scene
+     * @returns {Array<Cylinder>}
+     */
+    updateCylinders(returnCylinder = false){
+        if (this.manager.n == 0){
+            if (returnCylinder){
+                return null;
+            }else{
+                this.firstCylinder = null;
+            }
+        }else{
+            var origin = this.getAxialVector(this.manager.a, this.symmetryAxis)
+            var h = (Math.abs(this.manager.b - this.manager.a))/this.manager.n;
+            var axialVector = this.getAxialVector(h, this.symmetryAxis)
+
+            if (returnCylinder){
+                return new ChainableCylinder(origin, axialVector, 5, this.graph, this.manager.n);
+            }else{
+                this.firstCylinder = new ChainableCylinder(origin, axialVector, 5, this.graph, this.manager.n);
+            }
+            
+        }
+    }
 
     /**
      * Fetches graph object of given type
      * @param {String} graphType The name of the graph
      * @returns {Graph}
      */
-    getGraph(graphType){
+    updateGraph(graphType){
         let graph
         switch(graphType){
             case "linear":
@@ -41,36 +127,9 @@ class Scene3D{
                 graph = new Sine(-this.axisLimit, this.axisLimit, 0.1);
                 break;
         }
-        return graph
-    }
-
-    /**
-     * Get cylinder objects for scene
-     * @returns {Array<Cylinder>}
-     */
-    updateCylinders(returnCylinder = false){
-        if (this.n == 0){
-            if (returnCylinder){
-                return null;
-            }else{
-                this.firstCylinder = null;
-            }
-        }else{
-            var origin = this.getAxialVector(this.a, this.symmetryAxis)
-            var h = (Math.abs(this.b - this.a))/this.n;
-            var axialVector = this.getAxialVector(h, this.symmetryAxis)
-
-            if (returnCylinder){
-                return new ChainableCylinder(origin, axialVector, 5, this.graph, this.n);
-            }else{
-                this.firstCylinder = new ChainableCylinder(origin, axialVector, 5, this.graph, this.n);
-            }
-            
-        }
-    }
-
-    getActualVolume(){
-        return 3
+       
+        this.graph = graph
+        
     }
 
 
@@ -91,35 +150,7 @@ class Scene3D{
         return math.matrix(position)
     }
 
-    set_a(a){
-        this.a = a;
-        this.updateCylinders();
-    }
-    set_b(b){
-        this.b = b;
-        this.updateCylinders();
-    }
-    set_n(n){
-        this.n = n;
-        this.updateCylinders();
-    }
 
-    /**
-     * Update all the input values from the html page
-     */
-    updateInputs(){
-        this.a = document.getElementById("a_input").value;
-        this.b = document.getElementById("b_input").value;
-        this.n = document.getElementById("n_input").value;
-        this.graph = this.getGraph(document.getElementById("graphSelector").value)
-    }
-
-    updateAll(graphName){
-        this.updateInputs()
-        this.updateCylinders()
-        this.updatePlot(graphName, false)
-        this.volumeGraph.updateAll()
-    }
     
     setLayout(sometitlex, sometitley, sometitlez){
         //set layout of graphs. 
@@ -135,14 +166,18 @@ class Scene3D{
             plot_bgcolor: 'rgba(0,0,0,0)',
             dragmode: 'turntable',
             
-            
+            legend: {
+                x: 0.9,
+                yanchor: "bottom",
+                y: 0.1,
+            },
             scene: {
                 
                 aspectmode: "cube",
                 // xaxis: {range: [-0.05, 0.05], title: sometitlex},//, showticklabels: false},
                 // yaxis: {range: [-0.01, 0.01], title: sometitley},//, showticklabels: false},
                 // zaxis: {range: [-0.01, 0.01], title: sometitlez},//, showticklabels: false},
-                xaxis: {range: [-this.axisLimit, this.axisLimit], title: sometitlex, showbackground: false, showgrid: false, zeroline:true, showline:true},//, showticklabels: false},
+                xaxis: {range: [-this.axisLimit, this.axisLimit], title: sometitlex, showbackground: false, showgrid: false},//, showticklabels: false},
                 yaxis: {range: [-this.axisLimit, this.axisLimit], title: sometitley, showbackground: false, showgrid: false},//, showticklabels: false},
                 zaxis: {range: [-this.axisLimit, this.axisLimit], title: sometitlez, showbackground: false, showgrid: false},//, showticklabels: false},
                 
@@ -159,14 +194,15 @@ class Scene3D{
                     eye: {x: 0.5, y: -1, z: 0.5}//adjust camera starting view
                 }
             },
+
         };
     
         return newLayout;
     }
 
-    updatePlot(graphName, plotNew){
+    updatePlot(plotNew){
         // acquire axes
-        let plotData = []//this.axes.getDrawData();
+        let plotData = this.axes.getDrawData();
         // acquire graph
         plotData.push(this.graph.getDrawData("x", "z"));
         // acquire cylinders
@@ -175,40 +211,133 @@ class Scene3D{
         }
 
         if (plotNew){
-            Plotly.purge(graphName);
-            Plotly.newPlot(graphName, plotData, this.setLayout('x', 'y', 'z'), {responsive: true, displayModeBar: true,showspikes: false});
-            this.volumeGraph.newGraph()
+            Plotly.purge("graph3D");
+            Plotly.newPlot("graph3D", plotData, this.setLayout('x', 'y', 'z'), {responsive: true, displayModeBar: true,showspikes: false});
         }else{
-            Plotly.react(graphName, plotData, this.setLayout('x', 'y', 'z'));
-            this.volumeGraph.updateGraph()
+            Plotly.react("graph3D", plotData, this.setLayout('x', 'y', 'z'));
         }
-
-        
     }
 }
 
 
-class PageManager{
-    constructor(){
-        this.a = -5
-        this.b = 5
-        this.n = 0
-        this.graph = "quadratic"
-        // 3d graph object
-        let scene3D = new Scene(this, "x")
-        // 2d graph object
-        let volumeGraph = new VolumeGraph()
 
-    }
-    checkForNewInputs(){
 
+class Plot2D{
+    /**
+     * The graph that displays volumes against n is managed via this class
+     * @param {Number} actualVolume the true volume of the revolved graph
+     */
+    constructor(actualVolume){
+        this.n = []
+        this.vol = []
+        this.actualVolume = actualVolume
     }
-    newAll(){
-        // plots/loads everything from scratch
+
+    addPoint(n, cylinderVolume){
+        if (n!= 0){
+            this.updateData(n, cylinderVolume)
+            this.updateGraph()
+        }
     }
-    updateAll(){
-        // updates data and plots
-        this.checkForNewInputs()
+
+    /**
+     * @param {Number} n    number of cylinders
+     * @param {Number} cylinderVolume  volume of all cylinders
+     */
+    updateData(new_n, new_cylinderVolume){
+        // check for repeat
+        if (this.n.includes(new_n) == false){
+            this.n.push(new_n);
+            this.vol.push(new_cylinderVolume);
+            // this.sortData()
+        }
+    }
+
+    sortData(){
+        this.n.sort(function(a, b){return a - b});
+        this.vol.sort(function(a, b){return a - b});
+    }
+
+    updateActualVolume(actualVolume){
+        this.actualVolume = actualVolume
+    }
+
+    /**
+     * Clear everything about graph, for purpose of having new graph
+     * @param {Number} actualVolume true volume of new revolved graph
+     */
+    reset(newActualVolume){
+        this.clearData()
+        this.updateActualVolume(newActualVolume)
+        this.updateGraph()
+    }
+
+    clearData(){
+        this.n = []
+        this.vol = []
+    }
+
+    getPlotData(){
+        var lineLimit = 6
+        if (this.n.length != 0){
+            lineLimit = Math.max(...this.n)
+        }
+        var flatLine = ({
+            x: [0, lineLimit],
+            y: [this.actualVolume, this.actualVolume],
+            type: 'scatter',
+            mode:"lines",
+            line: {
+                width: 1,
+                color: "red",
+                //reversescale: false
+            }
+        })
+        var cylinderData = ({
+            x: this.n,
+            y: this.vol,
+            type: 'scatter',
+            mode:"lines+markers",
+            line: {
+                width: 1,
+                color: "blue",
+                //reversescale: false
+            }
+        });
+        return [flatLine, cylinderData]
+    }
+
+    newGraph(){
+        // var xmax = 6
+        // if (this.n.length != 0){
+        //     lineLimit = Math.max(...this.n)
+        // }
+        Plotly.purge("graph2D");
+        Plotly.newPlot("graph2D", this.getPlotData(), this.setLayout());
+    }
+
+    updateGraph(){
+        Plotly.react("graph2D", this.getPlotData(), this.setLayout());
+    }
+
+    setLayout() {
+        const new_layout = {
+            autosize: true,
+            // margin: {l: 45, r: 30, t: 30, b: 30},
+            // hovermode: "closest",
+            showlegend: false,
+            // xaxis: {range: [-100, 100], zeroline: true, title: sometitlex},
+            // yaxis: {range: [-100, 100], zeroline: true, title: sometitley},
+            xaxis: {title: "Number of cylinders"},
+            yaxis: {title: "Total cylinder volume"},
+            aspectratio: {x: 1, y: 1},
+            rangemode:"nonnegative"
+            // margin: {
+            //     l: 10, r: 5, b: 10, t: 5, pad: 0
+            // },
+            // rangemode:"nonnegative",
+        };
+        return new_layout;
     }
 }
 
@@ -218,30 +347,31 @@ function initialise() {
     let manager = new PageManager()
     // set up UI
     $("#graphSelector").on("input", function(){
-        //update 
-        manager.updateAll();
+        //this changes the true volume as well as cylinders 
+        manager.hardUpdate();
     });
 
     $("#a_input").on("input", function(){
-        //update 
-        manager.updateAll();
+        //this changes the true volume as well as cylinders 
+        manager.hardUpdate();
     });
 
     $("#b_input").on("input", function(){
-        //update 
-        manager.updateAll();
+        //this changes the true volume as well as cylinders 
+        manager.hardUpdate();
     });
 
     $("#n_input").on("input", function(){
-        //update 
-        manager.updateAll();
+        // only changes cylinder related stuff
+        manager.softUpdate();
     });
 
     $("#clearButton").on("click", function(){
-        //update 
-        manager.updateAll();
+        // only changes cylinder related stuff
+        document.getElementById("n_input").value = 0
+        manager.softUpdate();
+        manager.resetVolumeGraph()
     });
-
 
     // update plot for first time
     manager.newAll()

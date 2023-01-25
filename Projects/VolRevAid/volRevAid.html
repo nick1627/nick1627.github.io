@@ -12,42 +12,49 @@
 	<body>
         <div class = "sideBar" style="width:20%; float:left">
             <p>This page is under construction.</p>
-			<p>TO DO:
-				<ul>
-					<li>Add graph for volume against n</li>
-					<li>Add table for volume against n (or give current volume, or both)</li>
-					<li>Print actual volume from integration</li>
-					<li>Options for revolving about different axes</li>
-					<li>Options for plotting against different axes</li>
-					<li>Add explanations</li>
-					<li>move location of key</li>
-					<li>make decisions about graph range - free or not?</li>
-					<li>Are user-entered graphs doable?</li>
-					<li>Why can't plotly do minus signs?  Switch to older version</li>
-				</ul>
-			</p>
 			<p><a href = "../../index.html">Back to homepage</a></p>
 
 			<form>
-				<label for="graphSelector">Graph: </label>
-				<select name="graphSelector" id="graphSelector">
-					<option value="linear">Linear</option>
-					<option value="quadratic" selected>Quadratic</option>
-					<option value="sinusoid">Sinusoid</option>
-				</select>
-				<br/><br/>
-				<label for="a_input">a: </label>
-				<input type="number" id="a_input" name="a_input" value="-5">
-				<br/><br/>
-				<label for="b_input">b: </label>
-				<input type="number" id="b_input" name="b_input" value="5">
-				<br/><br/>
-				<label for="n_input">n: </label>
-				<input type="number" id="n_input" name="n_input" value="0" min="0">
-				<br/><br/>
+				<div class="formRow">
+					<div class="formRowLeft">
+						<label for="graphSelector">Graph: </label>
+						<select name="graphSelector" id="graphSelector">
+							<option value="linear">Linear</option>
+							<option value="quadratic" selected>Quadratic</option>
+							<option value="sinusoid">Sinusoid</option>
+						</select>
+					</div>
+					<div class="formRowRight">
+						<label for="axisSelector">Revolution axis: </label>
+						<select name="axisSelector" id="axisSelector">
+							<option value="x" selected>x</option>
+							<option value="y">y</option>
+							<option value="z">z</option>
+						</select>
+					</div>
+				</div>
+				<div class="formRow">
+					<div class="formRowLeft">
+						<label for="a_input">a: </label>
+						<input type="number" id="a_input" name="a_input" value="-5">
+					</div>
+					<div class="formRowRight">
+						<label for="b_input">b: </label>
+						<input type="number" id="b_input" name="b_input" value="5">
+					</div>
+				</div>
+				<div class="formRow">
+					<div class="formRowLeft">
+						<label for="n_input">n: </label>
+						<input type="number" id="n_input" name="n_input" value="0" min="0">
+					</div>
+					<div class="formRowRight">
+						<button type="button" id="clearButton">Clear cylinders</button>
+					</div>
+				</div>
 			</form>
-			<button type="button" id="clearButton">Clear cylinders</button>
-			<div id="graph2D" style="width:100%; float:center"></div>
+			
+			<div id="graph2D"></div>
 
         </div>
 		<div class = "mainSection" style="width:80%; height:100%; float:right">
