@@ -41,7 +41,7 @@ class Graph{
         let lineData = ({
             type: "scatter3d",
             mode: "lines",
-            name: "graph",
+            name: "Graph",
             x: [],
             y: [],
             z: [],
@@ -138,7 +138,7 @@ class Axes{
         let xAxis = ({
             type:"scatter3d",
             mode: "lines",
-            name: "xAxis",
+            name: "x-axis",
             x: [-this.axisLimit, this.axisLimit],
             y: [0, 0],
             z: [0, 0],
@@ -152,7 +152,7 @@ class Axes{
         let yAxis = ({
             type:"scatter3d",
             mode: "lines",
-            name: "yAxis",
+            name: "y-axis",
             x: [0, 0],
             y: [-this.axisLimit, this.axisLimit],
             z: [0, 0],
@@ -166,7 +166,7 @@ class Axes{
         let zAxis = ({
             type:"scatter3d",
             mode: "lines",
-            name: "zAxis",
+            name: "z-axis",
             x: [0, 0],
             y: [0, 0],
             z: [-this.axisLimit, this.axisLimit],

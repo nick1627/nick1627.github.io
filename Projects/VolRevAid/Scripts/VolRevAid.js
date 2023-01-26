@@ -118,9 +118,9 @@ class Plot3D{
             var axialVector = this.getAxialVector(h, this.symmetryAxis)
 
             if (returnCylinder){
-                return new ChainableCylinder(origin, axialVector, 5, this.graph, this.manager.n);
+                return new ChainableCylinder(origin, axialVector, 10, this.graph, this.manager.n);
             }else{
-                this.firstCylinder = new ChainableCylinder(origin, axialVector, 5, this.graph, this.manager.n);
+                this.firstCylinder = new ChainableCylinder(origin, axialVector, 10, this.graph, this.manager.n);
             }
             
         }
@@ -185,7 +185,7 @@ class Plot3D{
             
             legend: {
                 x: 1,
-                y: 0,
+                y: 0.01,
                 xanchor: "right",
                 yanchor: "bottom",
             },

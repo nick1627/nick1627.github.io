@@ -1,0 +1,25 @@
+<html>
+	<!-- comment -->
+	<head>
+		<link rel= "stylesheet" href = "../../GlobalStyles/textPageStyle.css"/>
+		<title>Development Info</title>
+	</head>
+	<body>
+		<div id = "Main">
+            <a href = "volRevAid.html">Back to Volumes of Revolution</a>
+			<h1>Development info</h1>
+            <h2>Delays</h2>
+            <p>You might have noticed delays when plotting with large n.  To plot, first the 
+                coordinates of the objects are calculated, and then they are plotted via
+                plotly.react().  The second part takes ~100 times longer than the first, and
+                I have no control over it.  The only solution is to seek a better plotting
+                library.
+            </p>
+			<h2>Other problems that need fixing</h2>
+			<ul>
+				<li>Fix delays - stop replotting if input has updated again</li>
+				<li>Screen user input - sometimes only accept integers</li>
+			</ul>
+		</div>
+	</body>
+</html>

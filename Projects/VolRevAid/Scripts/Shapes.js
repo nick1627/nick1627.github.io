@@ -91,7 +91,6 @@ class Circle extends Shape{
         for (let i = 0; i < circumferencePoints.length; i++){
             circumferencePoints[i] = math.add(circumferencePoints[i], this.centre)
         }
-
         return circumferencePoints
     }
 
