@@ -103,6 +103,10 @@ class Graph{
 }
 
 class Line extends Graph{
+    constructor(lowerLimit, upperLimit, spacing){
+        super(lowerLimit, upperLimit, spacing);
+        this.revolvable = ["x", "z"];
+    }
     equation(x){
         return x
     }
@@ -112,6 +116,10 @@ class Line extends Graph{
 }
 
 class Quadratic extends Graph{
+    constructor(lowerLimit, upperLimit, spacing){
+        super(lowerLimit, upperLimit, spacing)
+        this.revolvable=["x", "z"];
+    }
     equation(x){
         return 0.1*x*x
     }
@@ -121,6 +129,10 @@ class Quadratic extends Graph{
 }
 
 class Sine extends Graph{
+    constructor(lowerLimit, upperLimit, spacing){
+        super(lowerLimit, upperLimit, spacing)
+        this.revolvable = ["x"]
+    }
     equation(x){
         return Math.sin(x)
     }

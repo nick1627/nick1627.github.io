@@ -63,9 +63,9 @@ class PageManager{
      * Update all the input values from the html page
      */
     updateInputs(){
-        this.a = document.getElementById("a_input").value;
-        this.b = document.getElementById("b_input").value;
-        this.n = document.getElementById("n_input").value;
+        this.a = parseFloat(document.getElementById("a_input").value);
+        this.b = parseFloat(document.getElementById("b_input").value);
+        this.n = parseInt(document.getElementById("n_input").value);
         this.graphType = document.getElementById("graphSelector").value;
     }
 
@@ -184,7 +184,7 @@ class Plot3D{
             dragmode: 'turntable',
             
             legend: {
-                x: 1,
+                x: 0.99,
                 y: 0.01,
                 xanchor: "right",
                 yanchor: "bottom",
@@ -267,14 +267,36 @@ class Plot2D{
         if (this.n.includes(new_n) == false){
             this.n.push(new_n);
             this.vol.push(new_cylinderVolume);
-            // this.sortData()
+            this.sortData()
         }
     }
 
     sortData(){
-        this.n.sort(function(a, b){return a - b});
-        this.vol.sort(function(a, b){return a - b});
+        // sort both n and vol according to n (ascending)
+        // implement insertion sort
+
+        console.log(this.n)
+        var length = this.n.length;
+        var j
+        var temp
+        for (let i = 0; i < length; i++){
+            j = i
+            while((j > 0) && (this.n[j-1] > this.n[j])){
+                //swap
+                temp = this.n[j]
+                this.n[j] = this.n[j-1]
+                this.n[j-1] = temp
+
+                temp = this.vol[j]
+                this.vol[j] = this.vol[j-1]
+                this.vol[j-1] = temp
+
+                j = j-1
+            } 
+        }
+        console.log(this.n)
     }
+
 
     updateActualVolume(actualVolume){
         this.actualVolume = actualVolume
