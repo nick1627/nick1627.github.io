@@ -1,21 +1,25 @@
 class PageManager{
     constructor(){
-        this.a = -5
-        this.b = 5
-        this.n = 0
-        this.graphType = "quadratic"
+        this.a = -5;
+        this.b = 5;
+        this.n = 0;
+        this.graphType = "quadratic";
+        this.revolutionAxis = "x";
+        this.errorList = [];
+        
         // 3d graph object
-        this.scene = new Plot3D(this)
+        this.scene = new Plot3D(this);
         // 2d graph object
-        this.volumeGraph = new Plot2D(this.scene.graph.getIntegralVolume(this.a, this.b))
+        this.volumeGraph = new Plot2D(this.scene.graph.getIntegralVolume(this.a, this.b, this.revolutionAxis));
 
+        this.displayErrorList()
     }
 
     getTotalCylinderVolume(){
         if (this.n != 0){
-            return this.scene.firstCylinder.getChainVolume()
+            return this.scene.firstCylinder.getChainVolume();
         }else{
-            return 0
+            return 0;
         }
     }
    
@@ -23,39 +27,45 @@ class PageManager{
         // plots/loads everything from scratch
         // the most extreme reset possible (without recreating main objects)
         // only happens at start of page loading
-        this.scene.updatePlot(true)
+        this.scene.updatePlot()
         this.volumeGraph.newGraph()
 
-        this.updateTrueVolumeText(this.scene.graph.getIntegralVolume(this.a, this.b))
+        this.updateTrueVolumeText(this.scene.graph.getIntegralVolume(this.a, this.b, this.revolutionAxis))
     }
 
     hardUpdate(){
         // updates data and plots when the true volume has changed
         this.updateInputs()
-        this.scene.updateGraph(this.graphType)
-        this.scene.updateCylinders()
-        this.scene.updatePlot(false)
-        
-        var totalVol = this.getTotalCylinderVolume()
-        var trueVol = this.scene.graph.getIntegralVolume(this.a, this.b)
-        this.volumeGraph.reset(trueVol)
-        this.volumeGraph.addPoint(this.n, totalVol)
-        this.updateCylinderVolumeText(totalVol)
-        this.updateTrueVolumeText(trueVol)
+
+        if (this.errorList.length == 0){
+            this.scene.updateGraph()
+            this.scene.updateCylinders()
+            this.scene.updatePlot(false)
+            
+            var totalVol = this.getTotalCylinderVolume()
+            var trueVol = this.scene.graph.getIntegralVolume(this.a, this.b, this.revolutionAxis)
+            this.volumeGraph.reset(trueVol)
+            this.volumeGraph.addPoint(this.n, totalVol)
+            this.updateCylinderVolumeText(totalVol)
+            this.updateTrueVolumeText(trueVol)
+        }
     }
 
     softUpdate(){
         // updates data and plots when only cylinder volume has changed
         this.updateInputs()
-        this.scene.updateCylinders()
-        this.scene.updatePlot(false)
-        var totalVol = this.getTotalCylinderVolume()
-        this.volumeGraph.addPoint(this.n, totalVol)
-        this.updateCylinderVolumeText(totalVol)
+
+        if (this.errorList.length == 0){
+            this.scene.updateCylinders()
+            this.scene.updatePlot(false)
+            var totalVol = this.getTotalCylinderVolume()
+            this.volumeGraph.addPoint(this.n, totalVol)
+            this.updateCylinderVolumeText(totalVol)
+        }
     }
 
     resetVolumeGraph(){
-        this.volumeGraph.reset(this.scene.graph.getIntegralVolume(this.a, this.b))
+        this.volumeGraph.reset(this.scene.graph.getIntegralVolume(this.a, this.b, this.revolutionAxis))
     }
 
 
@@ -67,6 +77,45 @@ class PageManager{
         this.b = parseFloat(document.getElementById("b_input").value);
         this.n = parseInt(document.getElementById("n_input").value);
         this.graphType = document.getElementById("graphSelector").value;
+        this.revolutionAxis = document.getElementById("axisSelector").value;
+
+        this.checkInputs()
+    }
+
+    /**
+     * Here we check the inputs for validity
+     */
+    checkInputs(){
+        this.errorList = []
+        var domain = this.scene.graph.getDomain(this.revolutionAxis)
+
+        if (this.a < domain[0]) {
+            this.errorList.push("a must be within the domain of the function")
+        }
+
+        if (this.b > domain[1]) {
+            this.errorList.push("a must be within the domain of the function")
+        }
+
+        if (!(this.scene.graph.revolvable.includes(this.revolutionAxis))){
+            this.errorList.push("Graph type and axis of revolution are incompatible")
+        }
+
+        if (this.a >= this.b){
+            this.errorList.push("a must be less than b")
+        }
+
+
+        this.displayErrorList()
+    }
+
+    displayErrorList(){
+        if (this.errorList.length != 0){
+            document.getElementById("errorText").innerHTML = this.errorList[this.errorList.length - 1]
+        }else{
+            document.getElementById("errorText").innerHTML = "None"
+        }
+       
     }
 
     updateCylinderVolumeText(newValue){
@@ -93,37 +142,38 @@ class Plot3D{
         this.manager = manager;
         this.axisLimit = 10;
      
-        this.updateGraph(this.manager.graphType);
+        this.graph = this.getGraph();
 
         this.axes = new Axes(this.axisLimit);
-        this.symmetryAxis = "x";
-        this.firstCylinder = this.updateCylinders(true);
+        
+        this.firstCylinder = this.getCylinders();
     }
 
+
+
+    updateCylinders(){
+        this.firstCylinder = this.getCylinders()
+    }
 
     /**
      * Get cylinder objects for scene
      * @returns {Array<Cylinder>}
      */
-    updateCylinders(returnCylinder = false){
+    getCylinders(){
         if (this.manager.n == 0){
-            if (returnCylinder){
-                return null;
-            }else{
-                this.firstCylinder = null;
-            }
+            return null;
         }else{
-            var origin = this.getAxialVector(this.manager.a, this.symmetryAxis)
+            var origin = this.getAxialVector(this.manager.a, this.manager.revolutionAxis)
             var h = (Math.abs(this.manager.b - this.manager.a))/this.manager.n;
-            var axialVector = this.getAxialVector(h, this.symmetryAxis)
+            var axialVector = this.getAxialVector(h, this.manager.revolutionAxis)
 
-            if (returnCylinder){
-                return new ChainableCylinder(origin, axialVector, 10, this.graph, this.manager.n);
-            }else{
-                this.firstCylinder = new ChainableCylinder(origin, axialVector, 10, this.graph, this.manager.n);
-            }
-            
+            return new ChainableCylinder(origin, axialVector, 10, this.graph, this.manager.revolutionAxis, this.manager.n);
         }
+    }
+
+  
+    updateGraph(){
+        this.graph = this.getGraph()
     }
 
     /**
@@ -131,9 +181,9 @@ class Plot3D{
      * @param {String} graphType The name of the graph
      * @returns {Graph}
      */
-    updateGraph(graphType){
+    getGraph(){
         let graph
-        switch(graphType){
+        switch(this.manager.graphType){
             case "linear":
                 graph = new Line(-this.axisLimit, this.axisLimit, 0.1);
                 break;
@@ -145,8 +195,7 @@ class Plot3D{
                 break;
         }
        
-        this.graph = graph
-        
+        return graph
     }
 
 
@@ -275,7 +324,6 @@ class Plot2D{
         // sort both n and vol according to n (ascending)
         // implement insertion sort
 
-        console.log(this.n)
         var length = this.n.length;
         var j
         var temp
@@ -294,7 +342,6 @@ class Plot2D{
                 j = j-1
             } 
         }
-        console.log(this.n)
     }
 
 
@@ -391,6 +438,11 @@ function initialise() {
     let manager = new PageManager()
     // set up UI
     $("#graphSelector").on("input", function(){
+        //this changes the true volume as well as cylinders 
+        manager.hardUpdate();
+    });
+
+    $("#axisSelector").on("input", function(){
         //this changes the true volume as well as cylinders 
         manager.hardUpdate();
     });

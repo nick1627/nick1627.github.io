@@ -33,8 +33,13 @@ class Graph{
      * @param {Number} b the upper limit
      * @returns {Number}
      */
-    getIntegralVolume(a, b){
-        return Math.PI*(this.integralOfSquare(b) - this.integralOfSquare(a))
+    getIntegralVolume(a, b, symmetryAxis){
+        if (symmetryAxis == "x"){
+            return Math.PI*(this.integralOfSquare(b) - this.integralOfSquare(a))
+        }else{
+            return Math.PI*(this.inverse_integralOfSquare(b) - this.inverse_integralOfSquare(a))
+        }
+        
     }
 
     getDrawData(inputAxis, outputAxis){
@@ -97,8 +102,18 @@ class Graph{
      * @param {math.matrix} position    vector position on axis
      * @returns {Number}    
      */
-    equation3D(position){
-        return this.equation(math.sum(position))
+    equation3D(position, revolutionAxis){
+        if (revolutionAxis == "x"){
+            return this.equation(math.sum(position))
+        }else{
+            // revolutionAxis == "z"
+            return this.inverse_equation(math.sum(position))
+        }
+        
+    }
+
+    getDomain(revolutionAxis){
+        return [-Infinity, Infinity]
     }
 }
 
@@ -110,8 +125,14 @@ class Line extends Graph{
     equation(x){
         return x
     }
+    inverse_equation(x){
+        return this.equation(x)
+    }
     integralOfSquare(x){
         return x**3/3
+    }
+    inverse_integralOfSquare(x){
+        return this.integralOfSquare(x)
     }
 }
 
@@ -121,10 +142,23 @@ class Quadratic extends Graph{
         this.revolvable=["x", "z"];
     }
     equation(x){
-        return 0.1*x*x
+        return 0.1*x*x;
     }
     integralOfSquare(x){
-        return (x**5)/500
+        return (x**5)/500;
+    }
+    inverse_equation(x){
+        return math.sqrt(10*x);
+    }
+    inverse_integralOfSquare(x){
+        return 5*(x**2);
+    }
+    getDomain(revolutionAxis){
+        if (revolutionAxis == "x"){
+            return [-Infinity, Infinity]
+        }else{
+            return [0, Infinity]
+        }
     }
 }
 

@@ -220,19 +220,20 @@ class ChainableCylinder extends Cylinder{
     * @param {math.matrix}    axialVector     Vector from centre of first circle to centre of second
     * @param {Number}   angle       Angle between successive 'spokes' of circles in degrees
     * @param {Graph}    graph       The graph to fit the cylinders to
+    * @param {String}   revolutionAxis The axis of symmetry of the cylinder ("x", "z" etc)
     * @param {Number}   numCylinders the number of cylinders in the chain
     * @param {Number}   cylinderIndex the index of the current cylinder
     * @param {ChainableCylinder} previousCylinder a reference to the previous cylinder (optional)
 
     */
-    constructor(origin, axialVector, angle, graph, numCylinders, cylinderIndex = 0, previousCylinder = null){
-        let radius = graph.equation3D(origin)
+    constructor(origin, axialVector, angle, graph, revolutionAxis, numCylinders, cylinderIndex = 0, previousCylinder = null){
+        let radius = graph.equation3D(origin, revolutionAxis)
         super(origin, axialVector, radius, angle)
 
         this.previousCylinder = previousCylinder
         this.cylinderIndex = cylinderIndex
         if (cylinderIndex < (numCylinders - 1)){
-            this.nextCylinder = new ChainableCylinder(math.add(origin, axialVector), axialVector, angle, graph, numCylinders, cylinderIndex + 1, this)
+            this.nextCylinder = new ChainableCylinder(math.add(origin, axialVector), axialVector, angle, graph, revolutionAxis, numCylinders, cylinderIndex + 1, this)
         }else{
             this.nextCylinder = null
         }
