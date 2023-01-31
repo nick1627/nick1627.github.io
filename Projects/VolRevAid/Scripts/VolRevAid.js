@@ -220,7 +220,6 @@ class Plot3D{
     
     setLayout(sometitlex, sometitley, sometitlez){
         //set layout of graphs. 
-        console.log("hi")
         
         let newLayout = {//layout of 3D graph
             //showlegend: false,
