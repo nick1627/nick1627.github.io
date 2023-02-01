@@ -1,0 +1,42 @@
+* {
+    box-sizing: border-box;
+}
+
+html{
+    height:100%;/* make sure it is at least as tall as the viewport */
+    padding:0%;
+    overflow: hidden;
+}
+body{
+    display:flex;
+    background-color: black;
+    height:100%;
+    padding:0%;
+    border-style:none;
+    margin:0%;
+}
+
+
+.sideBar{
+    width:350px; 
+    /* float:left; */
+    background-color: rgb(35, 16, 92);
+    height: 100%;
+    padding: 5px;
+}
+
+
+.mainSection{
+    flex-grow:1;
+    height:100%;
+    box-sizing: border-box;
+}
+
+#plot3D{
+    width:100%;
+    height:100%;
+    padding:10px;
+}
+
+
+
