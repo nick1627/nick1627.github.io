@@ -1,4 +1,8 @@
 class PageManager{
+    /**
+     * The page manager class manages all the variables related to the page,
+     * and handles I/O and the generation of the graphics.
+     */
     constructor(){
         this.a = -5;
         this.b = 5;
@@ -15,6 +19,9 @@ class PageManager{
         this.displayErrorList()
     }
 
+    /**
+     * Get the volume of all the cylinders
+     */
     getTotalCylinderVolume(){
         if (this.n != 0){
             return this.scene.firstCylinder.getChainVolume();
@@ -22,19 +29,24 @@ class PageManager{
             return 0;
         }
     }
-   
+
+    /**
+    * plots/loads everything from scratch
+    * the most extreme reset possible (without recreating main objects)
+    * only happens at start of page loading
+    */
     newAll(){
-        // plots/loads everything from scratch
-        // the most extreme reset possible (without recreating main objects)
-        // only happens at start of page loading
+        
         this.scene.updatePlot()
         this.volumeGraph.newGraph()
 
         this.updateTrueVolumeText(this.scene.graph.getIntegralVolume(this.a, this.b, this.revolutionAxis))
     }
 
+    /**
+     * updates data and plots when the true volume has changed
+     */
     hardUpdate(){
-        // updates data and plots when the true volume has changed
         this.updateInputs()
 
         if (this.errorList.length == 0){
@@ -51,8 +63,11 @@ class PageManager{
         }
     }
 
+    /**
+     * updates data and plots when only cylinder volume has changed
+     */
     softUpdate(){
-        // updates data and plots when only cylinder volume has changed
+        
         this.updateInputs()
 
         if (this.errorList.length == 0){
@@ -64,6 +79,9 @@ class PageManager{
         }
     }
 
+    /**
+     * Reset the 2D graph of volume against n
+     */
     resetVolumeGraph(){
         this.volumeGraph.reset(this.scene.graph.getIntegralVolume(this.a, this.b, this.revolutionAxis))
     }
@@ -83,7 +101,7 @@ class PageManager{
     }
 
     /**
-     * Here we check the inputs for validity
+     * Here we check the user inputs for validity
      */
     checkInputs(){
         this.errorList = []
@@ -109,6 +127,9 @@ class PageManager{
         this.displayErrorList()
     }
 
+    /**
+     * Display errors found to user, if any
+     */
     displayErrorList(){
         if (this.errorList.length != 0){
             document.getElementById("errorText").innerHTML = this.errorList[this.errorList.length - 1]
@@ -118,10 +139,16 @@ class PageManager{
        
     }
 
+    /**
+     * Update text to display volume of current cylinders
+     */
     updateCylinderVolumeText(newValue){
         document.getElementById("cylinderVolumeText").innerHTML = String(newValue);
     }
 
+    /**
+     * Update the text showing the true revolved volume
+     */
     updateTrueVolumeText(newValue){
         document.getElementById("trueVolumeText").innerHTML = String(newValue);
     }
