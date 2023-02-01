@@ -183,6 +183,13 @@ class Orbit{
     }
 }
 
+class Body{
+    constructor(position, colour){
+        this.colour = colour;
+        this.position = position;
+    }
+}
+
 class Angle{
     constructor(Origin, AxisVector, RefVecOne, Angle, Detail){//RefVecTwo){
         this.Origin = Origin;
@@ -407,9 +414,9 @@ function Main(PlotNew = false){
     // PlotData.push(AxisData[2]);
 
     if (PlotNew){
-        OrbitA.NewPlot("3DGraph", PlotData, AxisLimit);
+        OrbitA.NewPlot("plot3D", PlotData, AxisLimit);
     }else{
-        OrbitA.UpdatePlot("3DGraph", PlotData, AxisLimit);
+        OrbitA.UpdatePlot("plot3D", PlotData, AxisLimit);
     }
 }
 
