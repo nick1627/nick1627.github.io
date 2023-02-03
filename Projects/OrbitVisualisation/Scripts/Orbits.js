@@ -279,7 +279,16 @@ function setLayout(sometitlex, sometitley, sometitlez, AxisLimit){
             l: 1, r: 1, b: 10, t: 1, pad: 0
         },
         dragmode: 'turntable',
+        legend: {
+            x: 0.99,
+            y: 0.01,
+            xanchor: "right",
+            yanchor: "bottom",
+        },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
         scene: {
+            
             
             aspectmode: "cube",
             // xaxis: {range: [-0.05, 0.05], title: sometitlex},//, showticklabels: false},
