@@ -1,17 +1,46 @@
 /*jshint esversion: 7 */
 class Orbit{
-    constructor(OrbitID, LongOfAscNode, Inclination, ArgOfPe, SemimajorAxis, Eccentricity){
-        this.ID = OrbitID;
+    constructor(LongOfAscNode, Inclination, ArgOfPe, SemimajorAxis, Eccentricity){
         this.LongOfAscNode = LongOfAscNode;
         this.Inclination = Inclination;
         this.ArgOfPe = ArgOfPe;
         this.a = SemimajorAxis;
         this.e = Eccentricity;
 
-        //this.PlotData = this.GetPlotData();
+        
     }
 
-    GetPlotData(OrbitPath, AxisLimit){
+
+    updateParameters(){
+        
+        let Omega = document.getElementById("LongOfAscNodeSlider").value;
+        let i = document.getElementById("InclinationSlider").value;
+        let omega = document.getElementById("ArgOfPeSlider").value;
+    
+        Omega = Omega*Math.PI/180; //convert angles to "radians".
+        i = i*Math.PI/180;
+        omega = omega*Math.PI/180;
+    
+        let a = document.getElementById("aSlider").value;
+        a = a*10**4;
+        let e = document.getElementById("eSlider").value;
+        
+        // let Play = document.getElementById("PlayButton").value;
+        // let PlaySpeed = document.getElementById("SpeedSlider").value;
+    
+        this.LongOfAscNode = Omega;
+        this.Inclination = i;
+        this.ArgOfPe = omega;
+        this.a = a;
+        this.e = e;
+
+        return;
+    }
+
+    getPlotData(){
+        let AxisLimit = 2*10**5;
+        let OrbitPath = this.GetPath()
+
         let x = OrbitPath[0];
         let y = OrbitPath[1];
         let z = OrbitPath[2];
@@ -173,77 +202,206 @@ class Orbit{
         return [NewX, NewY, NewZ];
     }
 
-    NewPlot(GraphName, GraphData, AxisLimit){
-        Plotly.purge(GraphName);
-        Plotly.newPlot(GraphName, GraphData, setLayout('x', 'y', 'z', AxisLimit));
-    }
-
-    UpdatePlot(GraphName, GraphData, AxisLimit){
-        Plotly.react(GraphName, GraphData, setLayout('x', 'y', 'z', AxisLimit));
-    }
+    
 }
 
 class Body{
-    constructor(position, colour){
+    constructor(name, position, colour, size){
+        this.name = name;
         this.colour = colour;
         this.position = position;
+        this.size = size;
+    }
+    getPlotData(){
+        let pointData = ({
+            type: "scatter3d",
+            mode: "points",
+            name: this.name,
+            x: [this.position[0]],
+            y: [this.position[1]],
+            z: [this.position[2]],
+
+            //ResultVector.subset(math.index(0, 0))
+
+            line: {
+                width: this.size,
+                color: this.colour,
+                //reversescale: false
+            }
+        });
+        return pointData;
     }
 }
 
 class Angle{
-    constructor(Origin, AxisVector, RefVecOne, Angle, Detail){//RefVecTwo){
-        this.Origin = Origin;
-        this.AxisVector = AxisVector;
-        this.RefVecOne = RefVecOne;
-        //this.RefVecTwo = RefVecTwo;//not sure if we need this -- could just replace with an angle 
-        this.Angle = Angle;
-        this.Detail = Detail; //the higher the detail, the more triangles make up the resultant sector thingy
+    /**
+     * Represents an 'angle' to plot on the 3d graph.
+     */
+    constructor(centre, axisVector, zeroAngleVector, angle, linearSize, numPoints){
+        this.centre = centre;
+        this.axisVector = math.norm(axisVector);
+        this.zeroAngleVector = math.mulitply(math.norm(zeroAngleVector), linearSize);
+        this.angle = angle;
+        this.numPoints = numPoints; //the higher the detail, the more triangles make up the resultant sector thingy
+        this.anglePoints = this.getPoints();
     }
-    GetAngleData(){
-        let LittleAngle = this.Angle/this.Detail;
-        let R = GetRotationMatrix(u, LittleAngle);
+    updateAngle(newAngle){
+        this.angle = newAngle;
+    }
+    updatePoints(){
+        this.anglePoints = this.getPoints();
+    }
+    
+    getPoints(){
+        let littleAngle = this.angle/(this.numPoints-1);
+        let R = this.getRotationMatrix(this.axisVector, littleAngle);
 
-        let PointsList = [];
-        PointsList.push([]);
+        this.anglePoints.push(math.add(this.centre, this.zeroAngleVector));
+    
+        var currentVector = this.zeroAngleVector;
 
-        FirstPoint = Origin + math.multiply(R, this.RefVecOne);
-        SecondPoint = Origin + math.multiply(R, First);
-        
-        CurrentVector = []
-        for (let i = 0; i < this.Detail; i++){
-            CurrentVector = math.multiply(R, CurrentVector);
-            PointsList.push
+        for (let i = 1; i < this.numPoints; i++){
+            currentVector = math.multiply(R, currentVector)
+            this.anglePoints.push(math.add(this.centre, currentVector))
+        }
+    }
+
+    /**
+     * Compute the rotation matrix for a rotation by an angle about an axis
+     * @param {math.matrix} rotationAxis The axis about which to rotate
+     * @param {Number} rotationAngle The amount by which to rotate in radians
+     * @returns {math.matrix} The rotation matrix is returned
+     */
+    getRotationMatrix(rotationAxis, rotationAngle){
+        let cosTheta = math.cos(rotationAngle);
+        let sinTheta = math.sin(rotationAngle);
+
+        var rotationMatrix = cosTheta*math.identity(3);
+        var x = rotationAxis.get[0];
+        var y = rotationAxis.get[1];
+        var z = rotationAxis.get[2];
+        var cpMatrix = math.matrix([[0, -z, y],[z, 0, -x],[-y, x, 0]]);
+        rotationMatrix = math.add(rotationMatrix, (math.mulitply(cpMatrix, sinTheta)));
+        rotationMatrix = math.add(rotationMatrix, (math.mulitply(math.multiply(rotationAxis, math.transpose(rotationAxis)), (1-cosTheta))));
+
+        return rotationMatrix;
+    }
+
+    // /**
+    //  * Compute outer product between two vectors
+    //  * @param {math.matrix} v1 the first vector
+    //  * @param {math.matrix} v2 the second vector
+    //  */
+    // getOuterProduct(v1, v2){
+    //     let ans = math.matrix()
+    // }
+
+    /**
+     * Get data for drawing the angles on the graph
+     */
+    getPlotData(){
+        let drawData = ({
+            type: "mesh3d",
+            x: [this.centre.get([0]), this.anglePoints[0].get([0])],
+            y: [this.centre.get([1]), this.anglePoints[0].get([1])],
+            z: [this.centre.get([2]), this.anglePoints[0].get([2])],
+            i: [],
+            j: [],
+            k: [],
+            facecolor: Array(this.anglePoints.length-1).fill("#aeedd3"),
+        });
+
+        let length = this.anglePoints.length;
+
+
+        for (let i = 1; i < length; i+=1 ){
+            drawData.x.push(this.anglePoints[i].get([0]));
+            drawData.y.push(this.anglePoints[i].get([1]));
+            drawData.z.push(this.anglePoints[i].get([2]));
+            drawData.i.push(0);
+            drawData.j.push(i);
+            drawData.k.push(i+1);
         }
 
-        let AngleData = ({
-            type: "mesh3d",
-
-            x: [this.Origin[0],],
-            y: [this.Origin[1],],
-            z: [this.Origin[2],]
-        });
+        return drawData;
     }
 }
-class Triangle{
-    constructor(A, B, C){
-        this.PointA = A;
-        this.PointB = B;
-        this.PointC = C;
+
+class Graph3D{
+    constructor(name){
+        this.name = name;
     }
-    GetTriangleData(){
-        let TriangleData = ({
-            type: "mesh3d",
-            //mode: "lines",
-            x:  [this.PointA[0], this.PointB[0], this.PointC[0]],
-            y:  [this.PointA[1], this.PointB[1], this.PointC[1]],
-            z:  [this.PointA[2], this.PointB[2], this.PointC[2]],
 
 
-        });
+    setLayout(sometitlex, sometitley, sometitlez, AxisLimit){
+        //set layout of graphs. 
+        
+        let new_layout = {//layout of 3D graph
+            //showlegend: false,
+            //showscale: false,
+            uirevision: 'dataset',
+            margin: {
+                l: 1, r: 1, b: 10, t: 1, pad: 0
+            },
+            dragmode: 'turntable',
+            legend: {
+                x: 0.99,
+                y: 0.01,
+                xanchor: "right",
+                yanchor: "bottom",
+            },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            scene: {
+                
+                
+                aspectmode: "cube",
+                // xaxis: {range: [-0.05, 0.05], title: sometitlex},//, showticklabels: false},
+                // yaxis: {range: [-0.01, 0.01], title: sometitley},//, showticklabels: false},
+                // zaxis: {range: [-0.01, 0.01], title: sometitlez},//, showticklabels: false},
+                xaxis: {range: [-AxisLimit, AxisLimit], title: sometitlex, showbackground: true, showgrid: false, backgroundcolor: "black"},//, showticklabels: false},
+                yaxis: {range: [-AxisLimit, AxisLimit], title: sometitley, showbackground: true, showgrid: false, backgroundcolor: "black"},//, showticklabels: false},
+                zaxis: {range: [-AxisLimit, AxisLimit], title: sometitlez, showbackground: true, showgrid: false, backgroundcolor: "black"},//, showticklabels: false},
+                
+                //aspectmode: "manual",
+                aspectratio: {
+                    x: 5, y: 1, z: 1,
+                },
 
-        return TriangleData;
+                camera: {
+                    up: {x: 0, y: 0, z: 1},//sets which way is up
+                    eye: {x: 1, y: 1, z: 1}//adjust camera starting view
+                }
+            },
+        };
+
+        return new_layout;
+    }
+
+
+    newPlot(objectList){
+        let graphData = objectList[0].getPlotData()
+        if (graphData.length > 1){
+            for (let i = 1; i<objectList.length; i++){
+                graphData.push(objectList[i].getPlotData())
+            }
+        }
+        Plotly.purge("plot3D");
+        Plotly.newPlot("plot3D", graphData, this.setLayout('x', 'y', 'z', 2*10**5));
+    }
+
+    updatePlot(objectList){
+        let graphData = objectList[0].getPlotData()
+        if (graphData.length > 1){
+            for (let i = 1; i<objectList.length; i++){
+                graphData.push(objectList[i].getPlotData())
+            }
+        }
+
+        Plotly.react("plot3D", graphData, this.setLayout('x', 'y', 'z', 2*10**5));
     }
 }
+
 
 function GetRotationMatrix(u, Theta){
     //u must be a unit vector - could deal with that here - yeah lets deal with that here.
@@ -268,70 +426,7 @@ function GetRotationMatrix(u, Theta){
 }
 
 
-function setLayout(sometitlex, sometitley, sometitlez, AxisLimit){
-    //set layout of graphs. 
-    
-    let new_layout = {//layout of 3D graph
-        //showlegend: false,
-        //showscale: false,
-        uirevision: 'dataset',
-        margin: {
-            l: 1, r: 1, b: 10, t: 1, pad: 0
-        },
-        dragmode: 'turntable',
-        legend: {
-            x: 0.99,
-            y: 0.01,
-            xanchor: "right",
-            yanchor: "bottom",
-        },
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        scene: {
-            
-            
-            aspectmode: "cube",
-            // xaxis: {range: [-0.05, 0.05], title: sometitlex},//, showticklabels: false},
-            // yaxis: {range: [-0.01, 0.01], title: sometitley},//, showticklabels: false},
-            // zaxis: {range: [-0.01, 0.01], title: sometitlez},//, showticklabels: false},
-            xaxis: {range: [-AxisLimit, AxisLimit], title: sometitlex, showbackground: true, showgrid: false, backgroundcolor: "black"},//, showticklabels: false},
-            yaxis: {range: [-AxisLimit, AxisLimit], title: sometitley, showbackground: true, showgrid: false, backgroundcolor: "black"},//, showticklabels: false},
-            zaxis: {range: [-AxisLimit, AxisLimit], title: sometitlez, showbackground: true, showgrid: false, backgroundcolor: "black"},//, showticklabels: false},
-            
-            //aspectmode: "manual",
-            aspectratio: {
-                x: 5, y: 1, z: 1,
-            },
 
-            camera: {
-                up: {x: 0, y: 0, z: 1},//sets which way is up
-                eye: {x: 1, y: 1, z: 1}//adjust camera starting view
-            }
-        },
-    };
-
-    return new_layout;
-}
-
-function GetNewInputs(){
-    let Omega = document.getElementById("LongOfAscNodeSlider").value;
-    let i = document.getElementById("InclinationSlider").value;
-    let omega = document.getElementById("ArgOfPeSlider").value;
-
-    Omega = Omega*Math.PI/180; //convert angles to "radians".
-    i = i*Math.PI/180;
-    omega = omega*Math.PI/180;
-
-    let a = document.getElementById("aSlider").value;
-    a = a*10**4;
-    let e = document.getElementById("eSlider").value;
-   
-
-    let Play = document.getElementById("PlayButton").value;
-    let PlaySpeed = document.getElementById("SpeedSlider").value;
-
-    return [Omega, i , omega, a, e, Play, PlaySpeed];
-}
 
 function GetReferenceAxis(AxisLimit){
     let AxisData = ({
@@ -408,34 +503,59 @@ function Main(PlotNew = false){
     let Play = NewVariables[5];
     let PlaySpeed = NewVariables[6];
 
-    let OrbitA = new Orbit(1, Omega, i, omega, a, e);
+    let OrbitA = new Orbit(Omega, i, omega, a, e);
     let OrbitPath = OrbitA.GetPath();
     let PlotData = OrbitA.GetPlotData(OrbitPath, AxisLimit);
 
     PlotData.push(GetReferenceAxis(AxisLimit));
 
-    let TriangleOne = new Triangle([0, 0, 0], [20000, 20000, 20000], [-10000, 20000, -40000]);
-    let TriangleData = TriangleOne.GetTriangleData();
-    PlotData.push(TriangleData);
+    // let TriangleOne = new Triangle([0, 0, 0], [20000, 20000, 20000], [-10000, 20000, -40000]);
+    // let TriangleData = TriangleOne.GetTriangleData();
+    // PlotData.push(TriangleData);
     // let AxisData = GetCartesianAxes(AxisLimit);
     // PlotData.push(AxisData[0]);
     // PlotData.push(AxisData[1]);
     // PlotData.push(AxisData[2]);
 
     if (PlotNew){
-        OrbitA.NewPlot("plot3D", PlotData, AxisLimit);
+        OrbitA.newPlot("plot3D", PlotData, AxisLimit);
     }else{
-        OrbitA.UpdatePlot("plot3D", PlotData, AxisLimit);
+        OrbitA.updatePlot("plot3D", PlotData, AxisLimit);
     }
 }
 
-function Initialise() {
+class PageManager{
+    constructor(){
+        // create graph
+        this.graph3D = new Graph3D("plot3D")
+
+        this.orbit = new Orbit()
+        this.sun = new Body("Star", [0, 0, 0], "yellow", 40)
+    }
+
+    new(){
+        this.orbit.updateParameters();
+        this.graph3D.newPlot([this.orbit, this.sun])
+    }
+
+    update(){
+        this.orbit.updateParameters();
+        this.graph3D.updatePlot([this.orbit, this.sun])
+    }
+}
+
+
+
+
+function initialise() {
+    let manager = new PageManager();
+
     $('#LongOfAscNodeSlider').on("input", function(){
         //update plots when value changed
         //update slider text
         $("#" + $(this).attr("id") + "Display").text($(this).val() + $("#" + $(this).attr("id") + "Display").attr("data-unit"));
         //update graph
-        Main();
+        manager.update();
     });
 
     $('#InclinationSlider').on("input", function(){
@@ -443,7 +563,7 @@ function Initialise() {
         //update slider text
         $("#" + $(this).attr("id") + "Display").text($(this).val() + $("#" + $(this).attr("id") + "Display").attr("data-unit"));
         //update graph
-        Main();
+        manager.update();
     });
 
     $('#ArgOfPeSlider').on("input", function(){
@@ -451,7 +571,7 @@ function Initialise() {
         //update slider text
         $("#" + $(this).attr("id") + "Display").text($(this).val() + $("#" + $(this).attr("id") + "Display").attr("data-unit"));
         //update graph
-        Main();
+        manager.update();
     });
 
     $('#aSlider').on("input", function(){
@@ -459,7 +579,7 @@ function Initialise() {
         //update slider text
         $("#" + $(this).attr("id") + "Display").text($(this).val() + $("#" + $(this).attr("id") + "Display").attr("data-unit"));
         //update graph
-        Main();
+        manager.update();
     });
 
     $('#eSlider').on("input", function(){
@@ -467,7 +587,7 @@ function Initialise() {
         //update slider text
         $("#" + $(this).attr("id") + "Display").text($(this).val() + $("#" + $(this).attr("id") + "Display").attr("data-unit"));
         //update graph
-        Main();
+        manager.update();
     });
 
     $('#InclinationSlider').on("input", function(){
@@ -475,31 +595,31 @@ function Initialise() {
         //update slider text
         $("#" + $(this).attr("id") + "Display").text($(this).val() + $("#" + $(this).attr("id") + "Display").attr("data-unit"));
         //update graph
-        Main();
+        manager.update();
     });
 
-    $('#PlayButton').on("click", function(){
+    // $('#PlayButton').on("click", function(){
 
-        if (document.getElementById("PlayButton").value == "false"){
-            $('#PlayButton').html("Pause");
-            document.getElementById("PlayButton").value = "true";
-            Main();
-        }else{
-            $('#PlayButton').html("Play");
-            window.cancelAnimationFrame(ID);
-            document.getElementById("PlayButton").value = "false";
-        }
-    });
+    //     if (document.getElementById("PlayButton").value == "false"){
+    //         $('#PlayButton').html("Pause");
+    //         document.getElementById("PlayButton").value = "true";
+    //         Main();
+    //     }else{
+    //         $('#PlayButton').html("Play");
+    //         window.cancelAnimationFrame(ID);
+    //         document.getElementById("PlayButton").value = "false";
+    //     }
+    // });
 
-    $('#SpeedSlider').on("input", function(){
-        //update plots when value changed
-        //update slider text
-        $("#" + $(this).attr("id") + "Display").text($(this).val() + $("#" + $(this).attr("id") + "Display").attr("data-unit"));
-        //update graph
-        Main();
-    });
+    // $('#SpeedSlider').on("input", function(){
+    //     //update plots when value changed
+    //     //update slider text
+    //     $("#" + $(this).attr("id") + "Display").text($(this).val() + $("#" + $(this).attr("id") + "Display").attr("data-unit"));
+    //     //update graph
+    //     Main();
+    // });
 
-    Main(PlotNew = true); //update plots upon setup.  This is the first time graphs are run upon opening the page
+    manager.new(); //update plots upon setup.  This is the first time graphs are run upon opening the page
 }
 
-$(document).ready(Initialise); //Load initialise when document is ready.
+$(document).ready(initialise); //Load initialise when document is ready.
