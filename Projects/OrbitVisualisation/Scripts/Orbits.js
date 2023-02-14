@@ -1,4 +1,5 @@
 /*jshint esversion: 7 */
+
 class Orbit{
     constructor(LongOfAscNode, Inclination, ArgOfPe, SemimajorAxis, Eccentricity){
         this.LongOfAscNode = LongOfAscNode;
@@ -39,19 +40,17 @@ class Orbit{
 
     getPlotData(){
         let AxisLimit = 2*10**5;
-        let OrbitPath = this.GetPath()
+        let OrbitPath = this.getPath()
 
-        let x = OrbitPath[0];
-        let y = OrbitPath[1];
-        let z = OrbitPath[2];
+        let plotData = []
 
         let OrbitData = ({
             type: "scatter3d",
             mode: "lines",
             name: "Orbit",
-            x: x,
-            y: y,
-            z: z,
+            x: OrbitPath[0],
+            y: OrbitPath[1],
+            z: OrbitPath[2],
 
             line: {
                 width: 6,
@@ -59,6 +58,12 @@ class Orbit{
                 //reversescale: false
             }
         });
+
+        plotData.push(OrbitData)
+
+        let referenceLine = new ReferenceLine("Reference", "x", 2*10**5, "red");
+        plotData.push(referenceLine.getPlotData());
+        
 
         let Omega = this.LongOfAscNode;
         let i = this.Inclination;
@@ -72,71 +77,75 @@ class Orbit{
         iMatrix = math.transpose(iMatrix);
         omegaMatrix = math.transpose(omegaMatrix);
 
+        let ascendingNodeLine = new ReferenceLine("ANode", "x", 2*10**5, "yellow");
+        let secondLine = new ReferenceLine("mid", "y", 2*10**5, "orange");
+        let thirdLine = new ReferenceLine("Pe", "x", 2*10**5, "green")
 
-        let Node1 = [[-AxisLimit], [0], [0]];
-        let Node2 = [[AxisLimit], [0], [0]];
-        
-        Node1 = math.multiply(OmegaMatrix, Node1);
-        Node2 = math.multiply(OmegaMatrix, Node2);
-
-        //console.log(ANode1);
-
-        let AscendingNodeData = ({
-            type: "scatter3d",
-            mode: "lines",
-            name: "ANode",
-            x: [Node1.subset(math.index(0,0)), Node2.subset(math.index(0,0))],
-            y: [Node1.subset(math.index(1,0)), Node2.subset(math.index(1,0))],
-            z: [Node1.subset(math.index(2,0)), Node2.subset(math.index(2,0))],
-
-            //ResultVector.subset(math.index(0, 0))
-
-            line: {
-                width: 6,
-                color: "yellow",
-                //reversescale: false
-            }
-        });
-
-        Node1 = [[-AxisLimit], [0], [0]];
-        Node2 = [[AxisLimit], [0], [0]];
-
-        Node1 = math.multiply(omegaMatrix, Node1);
-        Node2 = math.multiply(omegaMatrix, Node2);
-
-        Node1 = math.multiply(iMatrix, Node1);
-        Node2 = math.multiply(iMatrix, Node2);
-
-        Node1 = math.multiply(OmegaMatrix, Node1);
-        Node2 = math.multiply(OmegaMatrix, Node2);
+        let totalMatrix = OmegaMatrix;
+        plotData.push(ascendingNodeLine.getPlotData(totalMatrix))
+        totalMatrix = math.multiply(totalMatrix, iMatrix);
+        plotData.push(secondLine.getPlotData(totalMatrix))
+        totalMatrix = math.multiply(totalMatrix, omegaMatrix)
+        plotData.push(thirdLine.getPlotData(totalMatrix))
         
 
-        let PeriapsisData = ({
-            type: "scatter3d",
-            mode: "lines",
-            name: "Pe",
-            x: [Node1.subset(math.index(0,0)), Node2.subset(math.index(0,0))],
-            y: [Node1.subset(math.index(1,0)), Node2.subset(math.index(1,0))],
-            z: [Node1.subset(math.index(2,0)), Node2.subset(math.index(2,0))],
-
-            //ResultVector.subset(math.index(0, 0))
-
-            line: {
-                width: 6,
-                color: "blue",
-                //reversescale: false
-            }
-        });
-        //IT'S ALL BROKEN ... SOMETHING TO DO WITH THE TRANSPOSING?
+        // let Node1 = [[-AxisLimit], [0], [0]];
+        // let Node2 = [[AxisLimit], [0], [0]];
         
-        // let PeriapsisData = ({
+        // Node1 = math.multiply(OmegaMatrix, Node1);
+        // Node2 = math.multiply(OmegaMatrix, Node2);
 
+        // //console.log(ANode1);
+
+        // let AscendingNodeData = ({
+        //     type: "scatter3d",
+        //     mode: "lines",
+        //     name: "ANode",
+        //     x: [Node1.subset(math.index(0,0)), Node2.subset(math.index(0,0))],
+        //     y: [Node1.subset(math.index(1,0)), Node2.subset(math.index(1,0))],
+        //     z: [Node1.subset(math.index(2,0)), Node2.subset(math.index(2,0))],
+
+
+        //     line: {
+        //         width: 6,
+        //         color: "yellow",
+        //         //reversescale: false
+        //     }
         // });
-        return [OrbitData, AscendingNodeData, PeriapsisData];
-        //return [OrbitData, AscendingNodeData, PeriapsisData];
+
+        // Node1 = [[-AxisLimit], [0], [0]];
+        // Node2 = [[AxisLimit], [0], [0]];
+
+        // Node1 = math.multiply(omegaMatrix, Node1);
+        // Node2 = math.multiply(omegaMatrix, Node2);
+
+        // Node1 = math.multiply(iMatrix, Node1);
+        // Node2 = math.multiply(iMatrix, Node2);
+
+        // Node1 = math.multiply(OmegaMatrix, Node1);
+        // Node2 = math.multiply(OmegaMatrix, Node2);
+        
+
+        // let PeriapsisData = ({
+        //     type: "scatter3d",
+        //     mode: "lines",
+        //     name: "Pe",
+        //     x: [Node1.subset(math.index(0,0)), Node2.subset(math.index(0,0))],
+        //     y: [Node1.subset(math.index(1,0)), Node2.subset(math.index(1,0))],
+        //     z: [Node1.subset(math.index(2,0)), Node2.subset(math.index(2,0))],
+
+
+        //     line: {
+        //         width: 6,
+        //         color: "blue",
+        //     }
+        // });
+     
+        // return [OrbitData, AscendingNodeData, PeriapsisData];
+        return plotData;
     }
 
-    GetPath(){
+    getPath(){
         //gets orbit path
         let a = this.a;
         let e = this.e;
@@ -159,20 +168,16 @@ class Orbit{
             x[i] = x[i] - a*e; //translate so origin is a focus.
         }
 
-        let Path = this.Transform(x, y, z);
+        let Path = this.transform(x, y, z);
 
         return Path;
     }
 
-    Transform(x, y, z){
+    transform(x, y, z){
         //transforms orbit points into actual 3d position
         let Omega = this.LongOfAscNode;
         let i = this.Inclination;
         let omega = this.ArgOfPe;
-
-        // Omega = -Omega;
-        // i = -i;
-        // omega = -omega;
         
         
 
@@ -203,6 +208,61 @@ class Orbit{
     }
 
     
+}
+
+/**
+ * Reference line class.  Allows plotting of a reference line
+ * against which to draw angles.
+ */
+class ReferenceLine{
+    /**
+     * Create reference line
+     * @param {String} name The name of the line (for the key)
+     * @param {String} startAxis "x", "y" or "z"
+     * @param {Number} axisLimit Line goes from -axisLimit to +axisLimit in 3D
+     * @param {String} colour The colour of the line
+     */
+    constructor(name, startAxis, axisLimit, colour){
+        this.l = axisLimit;
+        this.axis = startAxis;
+        this.name = name;
+        this.colour = colour;
+    }
+    /**
+     * Get the data for plotting the line
+     * @param {math.matrix} rotationMatrix the matrix to move the line from the x-axis to its desired position
+     */
+    getPlotData(rotationMatrix=null){
+        let r1;
+        if (this.axis=="x"){
+            r1 = math.matrix([-this.l, 0, 0]);
+
+        }else{
+            r1 = math.matrix([0, -this.l, 0])
+        }
+
+        if (rotationMatrix != null){
+            r1 = math.multiply(rotationMatrix, r1);
+        }
+       
+
+        let lineData = ({
+            type: "scatter3d",
+            mode: "lines",
+            name: this.name,
+            x: [0, -r1.get([0])],
+            y: [0, -r1.get([1])],
+            z: [0, -r1.get([2])],
+
+
+            line: {
+                width: 6,
+                color: this.colour,
+            }
+        });
+
+        return lineData;
+    }
 }
 
 class Body{
@@ -247,6 +307,7 @@ class Angle{
     }
     updateAngle(newAngle){
         this.angle = newAngle;
+        this.updatePoints();
     }
     updatePoints(){
         this.anglePoints = this.getPoints();
@@ -300,30 +361,34 @@ class Angle{
      * Get data for drawing the angles on the graph
      */
     getPlotData(){
-        let drawData = ({
-            type: "mesh3d",
-            x: [this.centre.get([0]), this.anglePoints[0].get([0])],
-            y: [this.centre.get([1]), this.anglePoints[0].get([1])],
-            z: [this.centre.get([2]), this.anglePoints[0].get([2])],
-            i: [],
-            j: [],
-            k: [],
-            facecolor: Array(this.anglePoints.length-1).fill("#aeedd3"),
-        });
-
-        let length = this.anglePoints.length;
-
-
-        for (let i = 1; i < length; i+=1 ){
-            drawData.x.push(this.anglePoints[i].get([0]));
-            drawData.y.push(this.anglePoints[i].get([1]));
-            drawData.z.push(this.anglePoints[i].get([2]));
-            drawData.i.push(0);
-            drawData.j.push(i);
-            drawData.k.push(i+1);
+        if (this.angle != 0){
+            let drawData = ({
+                type: "mesh3d",
+                x: [this.centre.get([0]), this.anglePoints[0].get([0])],
+                y: [this.centre.get([1]), this.anglePoints[0].get([1])],
+                z: [this.centre.get([2]), this.anglePoints[0].get([2])],
+                i: [],
+                j: [],
+                k: [],
+                facecolor: Array(this.anglePoints.length-1).fill("#aeedd3"),
+            });
+    
+            let length = this.anglePoints.length;
+    
+    
+            for (let i = 1; i < length; i+=1 ){
+                drawData.x.push(this.anglePoints[i].get([0]));
+                drawData.y.push(this.anglePoints[i].get([1]));
+                drawData.z.push(this.anglePoints[i].get([2]));
+                drawData.i.push(0);
+                drawData.j.push(i);
+                drawData.k.push(i+1);
+            }
+    
+            return drawData;
+        }else{
+            return null;
         }
-
-        return drawData;
     }
 }
 
