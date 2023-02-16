@@ -1,48 +1,12 @@
 /*jshint esversion: 7 */
 
 class Orbit{
-    constructor(LongOfAscNode, Inclination, ArgOfPe, SemimajorAxis, Eccentricity){
-        this.LongOfAscNode = LongOfAscNode;
-        this.Inclination = Inclination;
-        this.ArgOfPe = ArgOfPe;
-        this.a = SemimajorAxis;
-        this.e = Eccentricity;
-
-        
-    }
-
-
-    updateParameters(){
-        
-        let Omega = document.getElementById("LongOfAscNodeSlider").value;
-        let i = document.getElementById("InclinationSlider").value;
-        let omega = document.getElementById("ArgOfPeSlider").value;
-    
-        Omega = Omega*Math.PI/180; //convert angles to "radians".
-        i = i*Math.PI/180;
-        omega = omega*Math.PI/180;
-    
-        let a = document.getElementById("aSlider").value;
-        a = a*10**4;
-        let e = document.getElementById("eSlider").value;
-        
-        // let Play = document.getElementById("PlayButton").value;
-        // let PlaySpeed = document.getElementById("SpeedSlider").value;
-    
-        this.LongOfAscNode = Omega;
-        this.Inclination = i;
-        this.ArgOfPe = omega;
-        this.a = a;
-        this.e = e;
-
-        return;
+    constructor(manager){
+        this.manager = manager; 
     }
 
     getPlotData(){
-        let AxisLimit = 2*10**5;
         let OrbitPath = this.getPath()
-
-        let plotData = []
 
         let OrbitData = ({
             type: "scatter3d",
@@ -55,55 +19,16 @@ class Orbit{
             line: {
                 width: 6,
                 color: "paleblue",
-                //reversescale: false
             }
         });
-
-        plotData.push(OrbitData)
-
-        let referenceLine = new ReferenceLine("Reference", "x", 2*10**5, "red");
-        plotData.push(referenceLine.getPlotData());
         
-
-        let Omega = this.LongOfAscNode;
-        let i = this.Inclination;
-        let omega = this.ArgOfPe;
-
-        let OmegaMatrix = math.matrix([[Math.cos(Omega), Math.sin(Omega), 0], [-Math.sin(Omega), Math.cos(Omega), 0], [0, 0, 1]]);
-        let iMatrix = math.matrix([[1, 0, 0], [0, Math.cos(i), Math.sin(i)], [0, -Math.sin(i), Math.cos(i)]]);
-        let omegaMatrix = math.matrix([[Math.cos(omega), Math.sin(omega), 0], [-Math.sin(omega), Math.cos(omega), 0], [0, 0, 1]]);
-
-        OmegaMatrix = math.transpose(OmegaMatrix);
-        iMatrix = math.transpose(iMatrix);
-        omegaMatrix = math.transpose(omegaMatrix);
-
-        let ascendingNodeLine = new ReferenceLine("ANode", "x", 2*10**5, "yellow");
-        let secondLine = new ReferenceLine("mid", "y", 2*10**5, "orange");
-        let thirdLine = new ReferenceLine("Pe", "x", 2*10**5, "green")
-
-        let totalMatrix = OmegaMatrix;
-        plotData.push(ascendingNodeLine.getPlotData(totalMatrix))
-        totalMatrix = math.multiply(totalMatrix, iMatrix);
-        plotData.push(secondLine.getPlotData(totalMatrix))
-        totalMatrix = math.multiply(totalMatrix, omegaMatrix)
-        plotData.push(thirdLine.getPlotData(totalMatrix))
-
-        let OmegaAngle = new Angle(math.matrix([0, 0, 0]), math.matrix([0, 0, 1]), math.matrix([1, 0, 0]), Omega, 50000, 30)
-        if (Omega != 0){
-            plotData.push(OmegaAngle.getPlotData())
-        }
-        
-        
-
-
-        
-        return plotData;
+        return OrbitData;
     }
 
     getPath(){
         //gets orbit path
-        let a = this.a;
-        let e = this.e;
+        let a = this.manager.a;
+        let e = this.manager.e;
         //first create x values.
         let n = 1000;
         let x = [];
@@ -130,16 +55,15 @@ class Orbit{
 
     transform(x, y, z){
         //transforms orbit points into actual 3d position
-        let Omega = this.LongOfAscNode;
-        let i = this.Inclination;
-        let omega = this.ArgOfPe;
+        // let Omega = this.manager.LongOfAscNode;
+        // let i = this.manager.Inclination;
+        // let omega = this.manager.ArgOfPe;
         
-        
+        let OmegaMatrix = this.manager.OmegaMatrix;
+        let iMatrix = this.manager.iMatrix;
+        let omegaMatrix = this.manager.omegaMatrix;
 
-        let OmegaMatrix = math.matrix([[Math.cos(Omega), Math.sin(Omega), 0], [-Math.sin(Omega), Math.cos(Omega), 0], [0, 0, 1]]);
-        let iMatrix = math.matrix([[1, 0, 0], [0, Math.cos(i), Math.sin(i)], [0, -Math.sin(i), Math.cos(i)]]);
-        let omegaMatrix = math.matrix([[Math.cos(omega), Math.sin(omega), 0], [-Math.sin(omega), Math.cos(omega), 0], [0, 0, 1]]);
-
+       
         let RotationMatrix = math.multiply(omegaMatrix, math.multiply(iMatrix, OmegaMatrix));
         
         RotationMatrix = math.transpose(RotationMatrix);
@@ -161,53 +85,57 @@ class Orbit{
         }
         return [NewX, NewY, NewZ];
     }
-
-    
 }
+
 
 /**
  * Reference line class.  Allows plotting of a reference line
  * against which to draw angles.
  */
-class ReferenceLine{
+class ReferenceLines{
     /**
-     * Create reference line
+     * Create reference lines
      * @param {String} name The name of the line (for the key)
-     * @param {String} startAxis "x", "y" or "z"
      * @param {Number} axisLimit Line goes from -axisLimit to +axisLimit in 3D
      * @param {String} colour The colour of the line
      */
-    constructor(name, startAxis, axisLimit, colour){
+    constructor(name, axisLimit, colour){
         this.l = axisLimit;
-        this.axis = startAxis;
         this.name = name;
         this.colour = colour;
+    }
+    getPoints(rotationMatrix = null){
+        let r1, r2;
+       
+        r1 = math.matrix([this.l, 0, 0]);
+
+        r2 = math.matrix([0, this.l, 0]);
+
+
+        if (rotationMatrix != null){
+            r1 = math.multiply(rotationMatrix, r1);
+            r2 = math.multiply(rotationMatrix, r2);
+        }
+
+        return [r1, r2];
     }
     /**
      * Get the data for plotting the line
      * @param {math.matrix} rotationMatrix the matrix to move the line from the x-axis to its desired position
      */
     getPlotData(rotationMatrix=null){
-        let r1;
-        if (this.axis=="x"){
-            r1 = math.matrix([-this.l, 0, 0]);
-
-        }else{
-            r1 = math.matrix([0, -this.l, 0])
-        }
-
-        if (rotationMatrix != null){
-            r1 = math.multiply(rotationMatrix, r1);
-        }
+        let points = this.getPoints(rotationMatrix);
+        let r1 = points[0];
+        let r2 = points[1];
        
 
-        let lineData = ({
+        let firstLineData = ({
             type: "scatter3d",
             mode: "lines",
             name: this.name,
-            x: [0, -r1.get([0])],
-            y: [0, -r1.get([1])],
-            z: [0, -r1.get([2])],
+            x: [0, r1.get([0])],
+            y: [0, r1.get([1])],
+            z: [0, r1.get([2])],
 
 
             line: {
@@ -216,9 +144,25 @@ class ReferenceLine{
             }
         });
 
-        return lineData;
+        let secondLineData = ({
+            type: "scatter3d",
+            mode: "lines",
+            name: this.name,
+            x: [0, r2.get([0])],
+            y: [0, r2.get([1])],
+            z: [0, r2.get([2])],
+
+
+            line: {
+                width: 6,
+                color: this.colour,
+            }
+        });
+
+        return [firstLineData, secondLineData];
     }
 }
+
 
 class Body{
     /**
@@ -246,17 +190,15 @@ class Body{
             y: [this.position[1]],
             z: [this.position[2]],
 
-            //ResultVector.subset(math.index(0, 0))
-
             line: {
                 width: this.size,
                 color: this.colour,
-                //reversescale: false
             }
         });
         return pointData;
     }
 }
+
 
 class Angle{
     /**
@@ -274,14 +216,16 @@ class Angle{
         this.zeroAngleVector = math.multiply(this.normalise(zeroAngleVector), linearSize);
         this.angle = angle;
         this.numPoints = numPoints; //the higher the detail, the more triangles make up the resultant sector thingy
-        this.getPoints();
+        this.updatePoints();
     }
-    updateAngle(newAngle){
+    updateAngle(newAngle, axisVector){
+
         this.angle = newAngle;
+        this.axisVector = this.normalise(axisVector)
         this.updatePoints();
     }
     updatePoints(){
-        this.getPoints();
+        this.anglePoints = this.getPoints();
     }
     normalise(vector){
         return math.multiply(vector, 1/math.norm(vector))
@@ -289,17 +233,32 @@ class Angle{
     
     getPoints(){
         let littleAngle = this.angle/(this.numPoints-1);
-        let R = this.getRotationMatrix(this.axisVector, littleAngle);
+        // let R = this.getRotationMatrix(this.axisVector, littleAngle);
+        // console.log(math.det(R))
 
-        this.anglePoints = [];
-        this.anglePoints.push(math.add(this.centre, this.zeroAngleVector));
+        // let anglePoints = [];
+        // anglePoints.push(math.add(this.centre, this.zeroAngleVector));
     
-        var currentVector = this.zeroAngleVector;
+        // let currentVector = this.zeroAngleVector;
 
+        // for (let i = 1; i < this.numPoints; i++){
+        //     currentVector = math.multiply(R, currentVector)
+        //     anglePoints.push(math.add(this.centre, currentVector))
+        // }
+
+        let anglePoints = []
+        anglePoints.push(math.add(this.centre, this.zeroAngleVector));
+
+        let currentVector = this.zeroAngleVector;
+
+        let cosTheta = math.cos(littleAngle);
+        let sinTheta = math.sin(littleAngle);
         for (let i = 1; i < this.numPoints; i++){
-            currentVector = math.multiply(R, currentVector)
-            this.anglePoints.push(math.add(this.centre, currentVector))
+            currentVector = math.add(math.add(math.multiply(cosTheta, currentVector), math.multiply(math.cross(this.axisVector, currentVector), sinTheta)), math.multiply(math.multiply(this.axisVector, math.dot(this.axisVector, currentVector)), (1-cosTheta)))
+            anglePoints.push(math.add(this.centre, currentVector))
         }
+
+        return anglePoints;
     }
 
     /**
@@ -313,11 +272,11 @@ class Angle{
         let cosTheta = math.cos(rotationAngle);
         let sinTheta = math.sin(rotationAngle);
 
-        var rotationMatrix = math.multiply(math.identity(3), cosTheta);
-        var x = rotationAxis.get([0]);
-        var y = rotationAxis.get([1]);
-        var z = rotationAxis.get([2]);
-        var cpMatrix = math.matrix([[0, -z, y],[z, 0, -x],[-y, x, 0]]);
+        let rotationMatrix = math.multiply(math.identity(3), cosTheta);
+        let x = rotationAxis.get([0]);
+        let y = rotationAxis.get([1]);
+        let z = rotationAxis.get([2]);
+        let cpMatrix = math.matrix([[0, -z, y],[z, 0, -x],[-y, x, 0]]);
         rotationMatrix = math.add(rotationMatrix, (math.multiply(cpMatrix, sinTheta)));
         rotationMatrix = math.add(rotationMatrix, (math.multiply(math.multiply(rotationAxis, math.transpose(rotationAxis)), (1-cosTheta))));
 
@@ -410,173 +369,143 @@ class Graph3D{
     }
 
 
-    newPlot(objectList){
-        let graphData = objectList[0].getPlotData()
-        if (objectList.length > 1){
-            for (let i = 1; i<objectList.length; i++){
-                graphData.push(objectList[i].getPlotData())
-            }
-        }
+    newPlot(plotDataList){
+       
         Plotly.purge("plot3D");
-        Plotly.newPlot("plot3D", graphData, this.setLayout('x', 'y', 'z', 2*10**5));
+        Plotly.newPlot("plot3D", plotDataList, this.setLayout('x', 'y', 'z', 2*10**5));
     }
 
-    updatePlot(objectList){
-        let graphData = objectList[0].getPlotData()
-        if (graphData.length > 1){
-            for (let i = 1; i<objectList.length; i++){
-                graphData.push(objectList[i].getPlotData())
-            }
-        }
+    updatePlot(plotDataList){
 
-        Plotly.react("plot3D", graphData, this.setLayout('x', 'y', 'z', 2*10**5));
+        Plotly.react("plot3D", plotDataList, this.setLayout('x', 'y', 'z', 2*10**5));
     }
 }
 
-
-function GetRotationMatrix(u, Theta){
-    //u must be a unit vector - could deal with that here - yeah lets deal with that here.
-    //theta is the angle anticlockwise in a right hand sense by which to rotate by
-    let Magu = ((u[0]**2 + u[1]**2 + u[2]**2)**0.5);
-    if (Magu != 1){
-        //Need to turn u into a unit vector 
-        for (i = 0; i < u.length; i++){
-            u[i] = u[i]/Magu;
-        }
-    }
-
-    //may need to transpose u initially... ok I think I dealt with that.
-    
-    
-    let CPMatrix = math.matrix([[0, -u[2], u[1]], [u[2], 0, -u[0]], [-u[1], u[0], 0]]);//indexing here may be broken
-    u = math.matrix([[u[0]], [u[1]], [u[2]]]);
-    let uOuterProduct = math.multiply(u, math.transpose(u));
-
-    let R = math.cos(Theta)*math.identity(3) + math.sin(Theta)*CPMatrix + (1 - math.cos(Theta))*(uOuterProduct);
-    return R;
-}
-
-
-
-
-function GetReferenceAxis(AxisLimit){
-    let AxisData = ({
-        type: "scatter3d",
-        mode: "lines",
-        name: "Reference Direction",
-        x: [0, AxisLimit],
-        y: [0, 0],
-        z: [0, 0],
-
-        line: {
-            width: 3,
-            color: "red"
-            //reversescale: false
-        }
-    });
-    return AxisData;
-}
-
-function GetCartesianAxes(AxisLimit){
-    let xAxis = ({
-        type:"scatter3d",
-        mode: "lines",
-        name: "xAxis",
-        x: [-AxisLimit, AxisLimit],
-        y: [0, 0],
-        z: [0, 0],
-
-        line:{
-            width: 3,
-            color:"red"
-        }
-    });
-
-    let yAxis = ({
-        type:"scatter3d",
-        mode: "lines",
-        name: "yAxis",
-        x: [0, 0],
-        y: [-AxisLimit, AxisLimit],
-        z: [0, 0],
-
-        line:{
-            width: 3,
-            color:"green"
-        }
-    });
-
-    let zAxis = ({
-        type:"scatter3d",
-        mode: "lines",
-        name: "zAxis",
-        x: [0, 0],
-        y: [0, 0],
-        z: [-AxisLimit, AxisLimit],
-
-        line:{
-            width: 3,
-            color:"blue"
-        }
-    });
-
-    return [xAxis, yAxis, zAxis];
-}
-
-function Main(PlotNew = false){
-    let AxisLimit = 2*10**5;
-    let NewVariables = GetNewInputs();
-    let Omega = NewVariables[0];
-    let i = NewVariables[1];
-    let omega = NewVariables[2];
-    let a = NewVariables[3];
-    let e = NewVariables[4];
-    let Play = NewVariables[5];
-    let PlaySpeed = NewVariables[6];
-
-    let OrbitA = new Orbit(Omega, i, omega, a, e);
-    let OrbitPath = OrbitA.GetPath();
-    let PlotData = OrbitA.GetPlotData(OrbitPath, AxisLimit);
-
-    PlotData.push(GetReferenceAxis(AxisLimit));
-
-    // let TriangleOne = new Triangle([0, 0, 0], [20000, 20000, 20000], [-10000, 20000, -40000]);
-    // let TriangleData = TriangleOne.GetTriangleData();
-    // PlotData.push(TriangleData);
-    // let AxisData = GetCartesianAxes(AxisLimit);
-    // PlotData.push(AxisData[0]);
-    // PlotData.push(AxisData[1]);
-    // PlotData.push(AxisData[2]);
-
-    if (PlotNew){
-        OrbitA.newPlot("plot3D", PlotData, AxisLimit);
-    }else{
-        OrbitA.updatePlot("plot3D", PlotData, AxisLimit);
-    }
-}
 
 class PageManager{
     constructor(){
+        //update input parameters
+        this.updateParameters();
         // create graph
-        this.graph3D = new Graph3D("plot3D")
+        this.graph3D = new Graph3D("plot3D");
 
-        this.orbit = new Orbit()
-        this.sun = new Body("Star", [0, 0, 0], "yellow", 40)
+        this.orbit = new Orbit(this);
+        this.sun = new Body("Star", [0, 0, 0], "yellow", 40);
+
+        this.firstAxes = new ReferenceLines("Reference", 2*10**5, "red");
+
+        this.secondAxes = new ReferenceLines("ANode", 2*10**5, "yellow");
+        this.thirdAxes = new ReferenceLines("mid", 2*10**5, "orange");
+        this.fourthAxes = new ReferenceLines("Pe", 2*10**5, "green");
+
+        this.OmegaAngle = new Angle(math.matrix([0, 0, 0]), math.matrix([0, 0, 1]), math.matrix([1, 0, 0]), this.LongOfAscNode, 50000, 60)
+        this.iAngle = new Angle(math.matrix([0, 0, 0]), math.matrix([1, 0, 0]), math.matrix([0, 1, 0]), this.Inclination, 50000, 60)
+        this.omegaAngle = new Angle(math.matrix([0, 0, 0]), math.matrix([0, 0, 1]), math.matrix([1, 0, 0]), this.ArgOfPe, 50000, 60)
+
+    }
+
+    /**
+     * get plotting data for all relevant objects
+     */
+    getPlotData(){
+        let plotData = [];
+
+        plotData.push(this.orbit.getPlotData());
+        plotData.push(this.sun.getPlotData())
+
+        plotData = plotData.concat(this.firstAxes.getPlotData());
+
+
+        let OmegaMatrix = math.transpose(this.OmegaMatrix);
+        let iMatrix = math.transpose(this.iMatrix);
+        let omegaMatrix = math.transpose(this.omegaMatrix);
+        
+
+        let totalMatrix = OmegaMatrix;
+        plotData = plotData.concat(this.secondAxes.getPlotData(totalMatrix))
+
+        if (this.LongOfAscNode != 0){
+            let cross = math.cross(this.firstAxes.getPoints()[0], this.secondAxes.getPoints(totalMatrix)[0])
+            if (this.LongOfAscNode > Math.PI){
+                cross = math.multiply(cross, -1);
+            }
+
+            this.OmegaAngle.updateAngle(this.LongOfAscNode, cross)
+            plotData.push(this.OmegaAngle.getPlotData())
+        }
+
+        totalMatrix = math.multiply(totalMatrix, iMatrix);
+        plotData = plotData.concat(this.thirdAxes.getPlotData(totalMatrix))
+
+        // if (this.Inclination != 0){
+        //     let cross = math.cross(this.secondAxes.getPoints()[1], this.thirdAxes.getPoints(totalMatrix)[1])
+        //     // if (this.Inclination > Math.PI){
+        //     //     cross = math.multiply(cross, -1);
+        //     // }
+
+        //     this.iAngle.updateAngle(this.Inclination, cross)
+        //     plotData.push(this.iAngle.getPlotData())
+        // }
+
+        totalMatrix = math.multiply(totalMatrix, omegaMatrix)
+        plotData = plotData.concat(this.fourthAxes.getPlotData(totalMatrix))
+
+
+
+
+        
+        return plotData;
     }
 
     new(){
-        this.orbit.updateParameters();
-        this.graph3D.newPlot([this.orbit, this.sun])
+        this.updateParameters();
+        this.graph3D.newPlot(this.getPlotData());
     }
 
     update(){
-        this.orbit.updateParameters();
-        this.graph3D.updatePlot([this.orbit, this.sun])
+        this.updateParameters();
+        this.graph3D.updatePlot(this.getPlotData());
+    }
+
+    updateParameters(){
+        let Omega = document.getElementById("LongOfAscNodeSlider").value;
+        let i = document.getElementById("InclinationSlider").value;
+        let omega = document.getElementById("ArgOfPeSlider").value;
+    
+        Omega = Omega*Math.PI/180; //convert angles to "radians".
+        i = i*Math.PI/180;
+        omega = omega*Math.PI/180;
+    
+        let a = document.getElementById("aSlider").value;
+        a = a*10**4;
+        let e = document.getElementById("eSlider").value;
+        
+        // let Play = document.getElementById("PlayButton").value;
+        // let PlaySpeed = document.getElementById("SpeedSlider").value;
+    
+        this.LongOfAscNode = Omega;
+        this.Inclination = i;
+        this.ArgOfPe = omega;
+        this.a = a;
+        this.e = e;
+
+        this.updateMatrices()
+    }
+
+    updateMatrices(){
+        //transforms orbit points into actual 3d position
+        let Omega = this.LongOfAscNode;
+        let i = this.Inclination;
+        let omega = this.ArgOfPe;
+        
+        
+
+        this.OmegaMatrix = math.matrix([[Math.cos(Omega), Math.sin(Omega), 0], [-Math.sin(Omega), Math.cos(Omega), 0], [0, 0, 1]]);
+        this.iMatrix = math.matrix([[1, 0, 0], [0, Math.cos(i), Math.sin(i)], [0, -Math.sin(i), Math.cos(i)]]);
+        this.omegaMatrix = math.matrix([[Math.cos(omega), Math.sin(omega), 0], [-Math.sin(omega), Math.cos(omega), 0], [0, 0, 1]]);
+
     }
 }
-
-
-
 
 function initialise() {
     let manager = new PageManager();
@@ -629,28 +558,9 @@ function initialise() {
         manager.update();
     });
 
-    // $('#PlayButton').on("click", function(){
 
-    //     if (document.getElementById("PlayButton").value == "false"){
-    //         $('#PlayButton').html("Pause");
-    //         document.getElementById("PlayButton").value = "true";
-    //         Main();
-    //     }else{
-    //         $('#PlayButton').html("Play");
-    //         window.cancelAnimationFrame(ID);
-    //         document.getElementById("PlayButton").value = "false";
-    //     }
-    // });
-
-    // $('#SpeedSlider').on("input", function(){
-    //     //update plots when value changed
-    //     //update slider text
-    //     $("#" + $(this).attr("id") + "Display").text($(this).val() + $("#" + $(this).attr("id") + "Display").attr("data-unit"));
-    //     //update graph
-    //     Main();
-    // });
 
     manager.new(); //update plots upon setup.  This is the first time graphs are run upon opening the page
 }
 
-$(document).ready(initialise); //Load initialise when document is ready.
+$(document).ready(initialise); //run initialise when document is ready.
