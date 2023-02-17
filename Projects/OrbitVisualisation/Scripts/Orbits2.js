@@ -99,11 +99,12 @@ class ReferenceLines{
      * @param {Number} axisLimit Line goes from -axisLimit to +axisLimit in 3D
      * @param {String} colour The colour of the line
      */
-    constructor(name, axisLimit, colour){
+    constructor(name, axisLimit, colour, opacity){
         this.l = axisLimit;
         this.name = name;
         this.colour = colour;
         this.rotationMatrix = math.matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
+        this.opacity = opacity;
     }
     getPoints(){
         let r1, r2;
@@ -136,32 +137,45 @@ class ReferenceLines{
         let firstLineData = ({
             type: "scatter3d",
             mode: "lines",
-            name: this.name,
+
             x: [0, r1.get([0])],
             y: [0, r1.get([1])],
             z: [0, r1.get([2])],
 
-
+            opacity: this.opacity[0],
             line: {
                 width: 6,
-                color: this.colour,
+                color: this.colour[0],
+                
             }
         });
+
+        if (this.name[0]!=null){
+            firstLineData.name=this.name[0];
+        }else{
+            firstLineData.showlegend=false;
+        }
 
         let secondLineData = ({
             type: "scatter3d",
             mode: "lines",
-            name: this.name,
             x: [0, r2.get([0])],
             y: [0, r2.get([1])],
             z: [0, r2.get([2])],
 
+            opacity:this.opacity[1],
 
             line: {
                 width: 6,
-                color: this.colour,
+                color: this.colour[1],
             }
         });
+
+        if (this.name[1]!=null){
+            secondLineData.name=this.name[1];
+        }else{
+            secondLineData.showlegend=false;
+        }
 
         return [firstLineData, secondLineData];
     }
@@ -215,7 +229,7 @@ class Angle{
      * @param {Number} numPoints the number of points that make up the angle 
      * @param {String} colour the colour of the angle drawn
      */
-    constructor(centre, axisVector, zeroAngleVector, angle, linearSize, numPoints, colour){
+    constructor(centre, axisVector, zeroAngleVector, angle, linearSize, numPoints, colour, name){
         this.centre = centre;
         this.axisVector = this.normalise(axisVector);
         this.zeroAngleVector = math.multiply(this.normalise(zeroAngleVector), linearSize);
@@ -223,6 +237,7 @@ class Angle{
         this.numPoints = numPoints; //the higher the detail, the more triangles make up the resultant sector 
         this.length = linearSize;
         this.colour = colour;
+        this.name = name;
         this.updatePoints();
     }
     updateAngle(newAngle, axisVector, zeroAngleVector=null){
@@ -243,18 +258,7 @@ class Angle{
     
     getPoints(){
         let littleAngle = this.angle/(this.numPoints-1);
-        // let R = this.getRotationMatrix(this.axisVector, littleAngle);
-        // console.log(math.det(R))
 
-        // let anglePoints = [];
-        // anglePoints.push(math.add(this.centre, this.zeroAngleVector));
-    
-        // let currentVector = this.zeroAngleVector;
-
-        // for (let i = 1; i < this.numPoints; i++){
-        //     currentVector = math.multiply(R, currentVector)
-        //     anglePoints.push(math.add(this.centre, currentVector))
-        // }
 
         let anglePoints = []
         anglePoints.push(math.add(this.centre, this.zeroAngleVector));
@@ -308,6 +312,7 @@ class Angle{
             j: [],
             k: [],
             facecolor: Array(this.anglePoints.length-1).fill(this.colour),
+            name:this.name,
         });
 
         let length = this.anglePoints.length;
@@ -402,15 +407,15 @@ class PageManager{
         this.orbit = new Orbit(this);
         this.sun = new Body("Star", [0, 0, 0], "yellow", 40);
 
-        this.firstAxes = new ReferenceLines("Reference", 2*10**5, "red");
+        this.firstAxes = new ReferenceLines(["x", "y"], 2*10**5, ["red", "red"], [0.3, 0.3]);
 
-        this.secondAxes = new ReferenceLines("ANode", 2*10**5, "yellow");
-        this.thirdAxes = new ReferenceLines("mid", 2*10**5, "orange");
-        this.fourthAxes = new ReferenceLines("Pe", 2*10**5, "green");
+        this.secondAxes = new ReferenceLines(["Ascending Node", null], 2*10**5, ["yellow", "red"], [1, 0.5]);
+        this.thirdAxes = new ReferenceLines([null, null], 2*10**5, ["red", "red"], [0.6, 0.6]);
+        this.fourthAxes = new ReferenceLines(["Periapsis", null], 2*10**5, ["blue", "red"], [1, 1]);
 
-        this.OmegaAngle = new Angle(math.matrix([0, 0, 0]), math.matrix([0, 0, 1]), math.matrix([1, 0, 0]), this.LongOfAscNode, 50000, 60, "#FFEA80")
-        this.iAngle = new Angle(math.matrix([0, 0, 0]), math.matrix([1, 0, 0]), math.matrix([0, 1, 0]), this.Inclination, 50000, 60, "#FF4D6A")
-        this.omegaAngle = new Angle(math.matrix([0, 0, 0]), math.matrix([0, 0, 1]), math.matrix([1, 0, 0]), this.ArgOfPe, 50000, 60, "#80EAFF")
+        this.OmegaAngle = new Angle(math.matrix([0, 0, 0]), math.matrix([0, 0, 1]), math.matrix([1, 0, 0]), this.LongOfAscNode, 50000, 60, "#FFEA80", "Longitude of ascending node")
+        this.iAngle = new Angle(math.matrix([0, 0, 0]), math.matrix([1, 0, 0]), math.matrix([0, 1, 0]), this.Inclination, 50000, 60, "#FF4D6A", "Inclination")
+        this.omegaAngle = new Angle(math.matrix([0, 0, 0]), math.matrix([0, 0, 1]), math.matrix([1, 0, 0]), this.ArgOfPe, 50000, 60, "#80EAFF", "Argument of periapsis")
 
     }
 
