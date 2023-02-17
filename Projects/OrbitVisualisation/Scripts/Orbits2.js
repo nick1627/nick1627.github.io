@@ -103,8 +103,9 @@ class ReferenceLines{
         this.l = axisLimit;
         this.name = name;
         this.colour = colour;
+        this.rotationMatrix = math.matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
     }
-    getPoints(rotationMatrix = null){
+    getPoints(){
         let r1, r2;
        
         r1 = math.matrix([this.l, 0, 0]);
@@ -112,10 +113,10 @@ class ReferenceLines{
         r2 = math.matrix([0, this.l, 0]);
 
 
-        if (rotationMatrix != null){
-            r1 = math.multiply(rotationMatrix, r1);
-            r2 = math.multiply(rotationMatrix, r2);
-        }
+       
+        r1 = math.multiply(this.rotationMatrix, r1);
+        r2 = math.multiply(this.rotationMatrix, r2);
+        
 
         return [r1, r2];
     }
@@ -124,7 +125,10 @@ class ReferenceLines{
      * @param {math.matrix} rotationMatrix the matrix to move the line from the x-axis to its desired position
      */
     getPlotData(rotationMatrix=null){
-        let points = this.getPoints(rotationMatrix);
+        if (rotationMatrix!=null){
+            this.rotationMatrix = rotationMatrix;
+        }
+        let points = this.getPoints();
         let r1 = points[0];
         let r2 = points[1];
        
@@ -209,19 +213,25 @@ class Angle{
      * @param {Number} angle the angle in radians
      * @param {Number} linearSize radius of angle
      * @param {Number} numPoints the number of points that make up the angle 
+     * @param {String} colour the colour of the angle drawn
      */
-    constructor(centre, axisVector, zeroAngleVector, angle, linearSize, numPoints){
+    constructor(centre, axisVector, zeroAngleVector, angle, linearSize, numPoints, colour){
         this.centre = centre;
         this.axisVector = this.normalise(axisVector);
         this.zeroAngleVector = math.multiply(this.normalise(zeroAngleVector), linearSize);
         this.angle = angle;
-        this.numPoints = numPoints; //the higher the detail, the more triangles make up the resultant sector thingy
+        this.numPoints = numPoints; //the higher the detail, the more triangles make up the resultant sector 
+        this.length = linearSize;
+        this.colour = colour;
         this.updatePoints();
     }
-    updateAngle(newAngle, axisVector){
+    updateAngle(newAngle, axisVector, zeroAngleVector=null){
 
         this.angle = newAngle;
-        this.axisVector = this.normalise(axisVector)
+        this.axisVector = this.normalise(axisVector);
+        if (zeroAngleVector!=null){
+            this.zeroAngleVector = math.multiply(this.normalise(zeroAngleVector), this.length);;
+        }
         this.updatePoints();
     }
     updatePoints(){
@@ -297,7 +307,7 @@ class Angle{
             i: [],
             j: [],
             k: [],
-            facecolor: Array(this.anglePoints.length-1).fill("#aeedd3"),
+            facecolor: Array(this.anglePoints.length-1).fill(this.colour),
         });
 
         let length = this.anglePoints.length;
@@ -398,9 +408,9 @@ class PageManager{
         this.thirdAxes = new ReferenceLines("mid", 2*10**5, "orange");
         this.fourthAxes = new ReferenceLines("Pe", 2*10**5, "green");
 
-        this.OmegaAngle = new Angle(math.matrix([0, 0, 0]), math.matrix([0, 0, 1]), math.matrix([1, 0, 0]), this.LongOfAscNode, 50000, 60)
-        this.iAngle = new Angle(math.matrix([0, 0, 0]), math.matrix([1, 0, 0]), math.matrix([0, 1, 0]), this.Inclination, 50000, 60)
-        this.omegaAngle = new Angle(math.matrix([0, 0, 0]), math.matrix([0, 0, 1]), math.matrix([1, 0, 0]), this.ArgOfPe, 50000, 60)
+        this.OmegaAngle = new Angle(math.matrix([0, 0, 0]), math.matrix([0, 0, 1]), math.matrix([1, 0, 0]), this.LongOfAscNode, 50000, 60, "#FFEA80")
+        this.iAngle = new Angle(math.matrix([0, 0, 0]), math.matrix([1, 0, 0]), math.matrix([0, 1, 0]), this.Inclination, 50000, 60, "#FF4D6A")
+        this.omegaAngle = new Angle(math.matrix([0, 0, 0]), math.matrix([0, 0, 1]), math.matrix([1, 0, 0]), this.ArgOfPe, 50000, 60, "#80EAFF")
 
     }
 
@@ -425,7 +435,7 @@ class PageManager{
         plotData = plotData.concat(this.secondAxes.getPlotData(totalMatrix))
 
         if (this.LongOfAscNode != 0){
-            let cross = math.cross(this.firstAxes.getPoints()[0], this.secondAxes.getPoints(totalMatrix)[0])
+            let cross = math.cross(this.firstAxes.getPoints()[0], this.secondAxes.getPoints()[0])
             if (this.LongOfAscNode > Math.PI){
                 cross = math.multiply(cross, -1);
             }
@@ -437,20 +447,32 @@ class PageManager{
         totalMatrix = math.multiply(totalMatrix, iMatrix);
         plotData = plotData.concat(this.thirdAxes.getPlotData(totalMatrix))
 
-        // if (this.Inclination != 0){
-        //     let cross = math.cross(this.secondAxes.getPoints()[1], this.thirdAxes.getPoints(totalMatrix)[1])
-        //     // if (this.Inclination > Math.PI){
-        //     //     cross = math.multiply(cross, -1);
-        //     // }
 
-        //     this.iAngle.updateAngle(this.Inclination, cross)
-        //     plotData.push(this.iAngle.getPlotData())
-        // }
 
         totalMatrix = math.multiply(totalMatrix, omegaMatrix)
         plotData = plotData.concat(this.fourthAxes.getPlotData(totalMatrix))
 
 
+        if (this.Inclination != 0){
+            let cross = math.cross(this.secondAxes.getPoints()[1], this.thirdAxes.getPoints()[1])
+            if (this.Inclination < 0){
+                cross = math.multiply(cross, -1);
+            }
+
+            this.iAngle.updateAngle(this.Inclination, cross, this.secondAxes.getPoints()[1])
+            plotData.push(this.iAngle.getPlotData())
+        }
+        
+
+        if (this.ArgOfPe != 0){
+            let cross = math.cross(this.thirdAxes.getPoints()[0], this.fourthAxes.getPoints()[0])
+            if (this.ArgOfPe > Math.PI){
+                cross = math.multiply(cross, -1);
+            }
+
+            this.omegaAngle.updateAngle(this.ArgOfPe, cross, this.thirdAxes.getPoints()[0])
+            plotData.push(this.omegaAngle.getPlotData())
+        }
 
 
         
@@ -471,6 +493,13 @@ class PageManager{
         let Omega = document.getElementById("LongOfAscNodeSlider").value;
         let i = document.getElementById("InclinationSlider").value;
         let omega = document.getElementById("ArgOfPeSlider").value;
+
+        if (Omega == 360){
+            Omega = 0;
+        }
+        if (omega == 360){
+            omega = 0;
+        }
     
         Omega = Omega*Math.PI/180; //convert angles to "radians".
         i = i*Math.PI/180;
