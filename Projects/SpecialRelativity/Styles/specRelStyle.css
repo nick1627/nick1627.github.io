@@ -1,0 +1,85 @@
+* {
+    box-sizing: border-box;
+    color:white;
+}
+
+html{
+    height:100%;/* make sure it is at least as tall as the viewport */
+    padding:0%;
+    overflow: hidden;
+}
+body{
+    display:flex;
+    flex-direction: column;
+    background-color: rgb(114, 192, 255);
+    height:100%;
+    padding:0%;
+    border-style:none;
+    margin:0%;
+}
+
+.mainSection{
+    flex-grow:1;
+    width:100%;
+}
+
+#plot1{
+    width:50%;
+    height:100%;
+    padding:10px;
+    float:left;
+}
+
+#plot2{
+    width:50%;
+    height:100%;
+    padding:10px;
+    float:right;
+}
+
+
+
+.bottomBar{
+    width:100%; 
+    background-color: rgb(57, 155, 240);
+    height: 130px;
+    padding: 8px;
+}
+
+.leftSection{
+    width:50%;
+    float:left;
+}
+.rightSection{
+    width:50%;
+    float:right;
+}
+
+.controlBox{
+    width:100%;
+    background-color: rgb(28, 122, 199);
+    padding:5px;
+    border-radius: 10px;
+}
+
+.slider{
+    margin-top:10px;
+    margin-bottom:10px;
+    width:75%;
+    float:center;
+}
+
+.sliderMin{
+    width:10%;
+    float:left;
+    margin-top:8px;
+}
+.sliderMax{
+    width:10%;
+    float:right;
+    margin-top:8px;
+}
+
+
+
+
